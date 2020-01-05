@@ -16,7 +16,15 @@ try() {
   fi
 }
 
-try 0 0
-try 42 42
+run_test() {
+  try 0 0
+  try 42 42
+  echo OK
+}
 
-echo OK
+if [ $# -eq 0 ]; then
+  run_test
+else
+  try $1 $2
+fi
+
