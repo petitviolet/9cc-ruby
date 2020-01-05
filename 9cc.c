@@ -79,9 +79,7 @@ int expect_number() {
   return val;
 }
 
-bool at_eof() {
-  return token->kind == TK_EOF;
-}
+bool at_eof() { return token->kind == TK_EOF; }
 
 // 新しいトークンを作成してcurに繋げる
 Token *new_token(TokenKind kind, Token *cur, char *str) {
@@ -157,4 +155,3 @@ int main(int argc, char **argv) {
   printf("  ret\n");
   return 0;
 }
-
