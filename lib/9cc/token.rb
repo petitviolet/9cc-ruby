@@ -23,26 +23,67 @@ module Token
     def error_at(inputs, index, message)
       msg = <<~EOF
 
-      #{inputs}
-       #{" " * index} ^ #{message}
+        #{inputs}
+         #{" " * index} ^ #{message}
       EOF
       raise ArgumentError.new(msg)
     end
   end
 
   module TokenKind
+    def self.new(attribute = nil)
+      if attribute
+        Class.new do
+          def initialize(value)
+            @value = value
+          end
+
+          define_method(attribute.to_s) do
+            @value
+          end
+
+          def inspect
+            "#{self.class.name}(#{@value})"
+          end
+
+          alias :to_s :inspect
+
+          def deconstruct
+            [@value]
+          end
+        end
+      else
+        Class.new do
+          def initialize
+
+          end
+
+          def inspect
+            "#{self.class.name}"
+          end
+
+          alias :to_s :inspect
+
+          def deconstruct
+            []
+          end
+        end
+      end
+    end
   end
   # Sign
-  class Reserved < Struct.new(:char)
-    include(TokenKind)
+  class Reserved < TokenKind.new(:char)
+    def initialize(value)
+      @value = value
+    end
   end
   # Number
-  class Num < Struct.new(:value)
-    include(TokenKind)
+  class Num < TokenKind.new(:value)
+    def initialize(value)
+      @value = value
+    end
   end
   # End of file
-  class Eof
-    include(TokenKind)
+  class Eof < TokenKind.new
   end
 end
-
