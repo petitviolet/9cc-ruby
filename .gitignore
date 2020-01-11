@@ -17,7 +17,7 @@ a.out
 *.pch
 
 # Libraries
-*.lib
+!lib/9cc
 *.a
 *.la
 *.lo
