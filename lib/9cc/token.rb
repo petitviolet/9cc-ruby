@@ -1,3 +1,5 @@
+require_relative './rstruct'
+
 module Token
   class << self
     # @param user_inputs [String]
@@ -5,6 +7,7 @@ module Token
     def tokenize(user_inputs)
       tokens = []
       user_inputs.split(' ').each.with_index do |char, i|
+
         case char
         in ' '
           next
@@ -30,60 +33,10 @@ module Token
     end
   end
 
-  module TokenKind
-    def self.new(attribute = nil)
-      if attribute
-        Class.new do
-          def initialize(value)
-            @value = value
-          end
-
-          define_method(attribute.to_s) do
-            @value
-          end
-
-          def inspect
-            "#{self.class.name}(#{@value})"
-          end
-
-          alias :to_s :inspect
-
-          def deconstruct
-            [@value]
-          end
-        end
-      else
-        Class.new do
-          def initialize
-
-          end
-
-          def inspect
-            "#{self.class.name}"
-          end
-
-          alias :to_s :inspect
-
-          def deconstruct
-            []
-          end
-        end
-      end
-    end
-  end
   # Sign
-  class Reserved < TokenKind.new(:char)
-    def initialize(value)
-      @value = value
-    end
-  end
+  Reserved = Rstruct.new(:char)
   # Number
-  class Num < TokenKind.new(:value)
-    def initialize(value)
-      @value = value
-    end
-  end
+  Num = Rstruct.new(:value)
   # End of file
-  class Eof < TokenKind.new
-  end
+  Eof = Rstruct.new
 end
