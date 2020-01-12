@@ -1,16 +1,17 @@
 module Rstruct
   def self.new(*attributes)
     names = caller.map do |stack|
+      # ".../hoge.rb:7:in `<module:Hoge>'"
       if (m = stack.match(/\A.+in `<(module|class):(.+)>.+/))
         m[2]
       end
     end.reject(&:nil?)
     file_name, line_num = caller[0].split(':')
     line_executed = File.readlines(file_name)[line_num.to_i - 1]
-    names << line_executed.match(/\A\s*(\S+)\s*=/)[1]
+    names << line_executed.match(/\A\s*(\S+)\s*=/)[1] # "  Point = Rstruct.new(:x, :y)\n"
     class_name = names.join('::')
     Class.new.tap do |k|
-      k.class_eval <<~EOS
+      k.class_eval <<~RUBY
         def initialize(#{attributes.join(", ")})
           #{attributes.map { |attr| "@#{attr} = #{attr}" }.join("\n")}
         end
@@ -21,7 +22,7 @@ module Rstruct
           if #{attributes.empty?}
             "#{class_name}"
           else
-            __attrs = #{attributes.map { |attr| "'#{attr}: ' + @#{attr}.to_s" }.join(", ")}
+            __attrs = Array[#{attributes.map { |attr| "'#{attr}: ' + @#{attr}.to_s" }.join(", ")}].join(", ")
             "#{class_name}(" + __attrs + ")"
           end
         end
@@ -31,7 +32,7 @@ module Rstruct
         def deconstruct
           [#{attributes.map { |attr| "@#{attr}" }.join(", ")}]
         end
-      EOS
+      RUBY
     end
   end
 end
