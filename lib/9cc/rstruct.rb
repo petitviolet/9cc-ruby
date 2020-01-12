@@ -1,15 +1,19 @@
 module Rstruct
   def self.new(*attributes)
-    names = caller.map do |stack|
-      # ".../hoge.rb:7:in `<module:Hoge>'"
-      if (m = stack.match(/\A.+in `<(module|class):(.+)>.+/))
-        m[2]
-      end
-    end.reject(&:nil?)
-    file_name, line_num = caller[0].split(':')
-    line_executed = File.readlines(file_name)[line_num.to_i - 1]
-    names << line_executed.match(/\A\s*(\S+)\s*=/)[1] # "  Point = Rstruct.new(:x, :y)\n"
-    class_name = names.join('::')
+    begin
+      names = caller.map do |stack|
+        # ".../hoge.rb:7:in `<module:Hoge>'"
+        if (m = stack.match(/\A.+in `<(module|class):(.+)>.+/))
+          m[2]
+        end
+      end.reject(&:nil?)
+      file_name, line_num = caller[0].split(':')
+      line_executed = File.readlines(file_name)[line_num.to_i - 1]
+      names << line_executed.match(/\A\s*(\S+)\s*=/)[1] # "  Point = Rstruct.new(:x, :y)\n"
+      class_name = names.join('::')
+    rescue
+      class_name = 'Rstruct'
+    end
     Class.new.tap do |k|
       k.class_eval <<~RUBY
         def initialize(#{attributes.join(", ")})
