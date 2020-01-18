@@ -3,14 +3,15 @@ require 'rstructural'
 module Token
 
   class << self
-    PUNCTUATIONS = ['+', '-', '*', '/', '(', ')']
+    PUNCTUATIONS = %w|+ - * / ( )|
 
     # @param user_inputs [String]
     # @return [TokenKind]
     def tokenize(user_inputs)
-      user_inputs.split(' ').each_with_index.reduce([]) do |acc, (char, i)|
+      user_inputs.each_char.with_index.reduce([]) do |acc, (char, i)|
         case char
         in ' '
+          # skip
         in char if PUNCTUATIONS .include?(char)
           acc << Token::Reserved.new(char)
         in num if num =~ /\A[1-9]*[0-9]+\z/
