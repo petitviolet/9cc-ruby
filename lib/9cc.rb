@@ -1,5 +1,6 @@
 require 'byebug'
 require_relative '9cc/token'
+require_relative '9cc/node'
 
 class Program
   # @param user_input [String] Given program
@@ -10,6 +11,8 @@ class Program
   def run
     tokens = Token.tokenize(@user_input)
     pp tokens
+    nodes = Node::Parser.new(tokens).run
+    pp nodes
     outputs = []
 
     # Headers of assembly
