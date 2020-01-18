@@ -1,4 +1,4 @@
-require_relative './rstruct'
+require 'rstructural'
 
 module Token
   class << self
@@ -7,7 +7,6 @@ module Token
     def tokenize(user_inputs)
       tokens = []
       user_inputs.split(' ').each.with_index do |char, i|
-
         case char
         in ' '
           next
@@ -19,7 +18,7 @@ module Token
           error_at(user_inputs, i, "Failed to tokenize. input = #{char}")
         end
       end
-      tokens << Token::Eof.new
+      tokens << Token::Eof
       tokens
     end
 
@@ -33,10 +32,12 @@ module Token
     end
   end
 
+  extend ADT
+
   # Sign
-  Reserved = Rstruct.new(:char)
+  Reserved = data :char
   # Number
-  Num = Rstruct.new(:value)
+  Num = data :value
   # End of file
-  Eof = Rstruct.new
+  Eof = const
 end
