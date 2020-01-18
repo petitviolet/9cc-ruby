@@ -20,14 +20,14 @@ module Node
     def run
       case expr(@tokens)
       in [nodes, [Token::Eof]]
-        return nodes
+        nodes
       in [nodes, rest] # else
-          raise RuntimeError, <<~MSG
+        raise RuntimeError, <<~MSG
           tokens must be empty after run `expr`.
             inputs: #{@tokens}
             nodes: #{nodes}
             tokens: #{rest}
-          MSG
+        MSG
       end
     end
 
@@ -36,29 +36,40 @@ module Node
       # primary = num | "(" expr ")"
       def primary(tokens)
         case tokens
-        in [Token::Num[value], *rest]
-          [Node::Num.new(value), rest]
-        in [Token::Reserved['('], *rest]
-          case expr(rest)
-          in [node, [Token::Reserved[')'], *rest]]
-            return [node, rest]
+        in [Token::Num[value], *tokens]
+          [Node::Num.new(value), tokens]
+        in [Token::Reserved['('], *tokens]
+          case expr(tokens)
+          in [node, [Token::Reserved[')'], *tokens]]
+            return [node, tokens]
+          else
+            raise ArgumentError.new("next token must be ')'. tokens: #{tokens}, expr: #{expr(tokens)}")
           end
+        else
+          raise ArgumentError.new("invalid input. tokens: #{tokens}")
         end
       end
 
       # mul     = primary ("*" primary | "/" primary)*
       def mul(tokens)
         left, tokens = primary(tokens)
-        nodes = [left]
+        nodes = []
         while true do
           case tokens
           in [Token::Reserved['*'], *tokens]
             right, tokens = primary(tokens)
-            nodes << Node::Mul.new(left, right)
+            node = Node::Mul.new(left, right)
+            nodes << node
+            left = node
           in [Token::Reserved['/'], *tokens]
             right, tokens = primary(tokens)
-            nodes << Node::Div.new(left, right)
+            node = Node::Div.new(left, right)
+            nodes << node
+            left = node
           else
+            if nodes.empty?
+              nodes << left
+            end
             break
           end
         end
@@ -68,16 +79,26 @@ module Node
       # expr    = mul ("+" mul | "-" mul)*
       def expr(tokens)
         left, tokens = mul(tokens)
-        nodes = [left]
+        node = nil
+        nodes = []
         while true do
           case tokens
           in [Token::Reserved['+'], *tokens]
             right, tokens = mul(tokens)
-            nodes << Node::Add.new(left, right)
+            node = Node::Add.new(left, right)
+            nodes << node
+            left = node
           in [Token::Reserved['-'], *tokens]
             right, tokens = mul(tokens)
-            nodes << Node::Sub.new(left, right)
+            node = Node::Sub.new(left, right)
+            nodes << node
+            left = node
+          in [Token::Eof]
+            return [Array(left).first, [Token::Eof]]
           else
+            if nodes.empty?
+              nodes << left
+            end
             break
           end
         end
