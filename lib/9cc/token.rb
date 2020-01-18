@@ -5,22 +5,38 @@ module Token
   class << self
     PUNCTUATIONS = %w|+ - * / ( )|
 
-    # @param user_inputs [String]
+    # @param [String] user_inputs
     # @return [TokenKind]
     def tokenize(user_inputs)
+      # need rafactoring...
+      num_ch = ''
       user_inputs.each_char.with_index.reduce([]) do |acc, (char, i)|
         case char
-        in ' '
-          # skip
-        in char if PUNCTUATIONS .include?(char)
-          acc << Token::Reserved.new(char)
-        in num if num =~ /\A[1-9]*[0-9]+\z/
-          acc << Token::Num.new(num.to_i)
+        in num if num_ch.empty? && num == '0'
+          error_at(user_inputs, i, 'Number must not start with 0')
+        in num if num =~ /[0-9]/
+          num_ch = "#{num_ch}#{num}"
         else
-          error_at(user_inputs, i, "Failed to tokenize. input = #{char}")
+          unless num_ch.empty?
+            acc << Token::Num.new(num_ch.to_i) # cleanup num_ch == '00001' -> 1
+            num_ch = ''
+          end
+          case char
+          in ' '
+            # skip
+          in char if PUNCTUATIONS.include?(char)
+            acc << Token::Reserved.new(char)
+          else
+            error_at(user_inputs, i, "Failed to tokenize. input = #{char}")
+          end
         end
         acc
-      end.tap { |acc| acc << Token::Eof }
+      end.tap do |acc|
+        unless num_ch.empty?
+          acc << Token::Num.new(num_ch.to_i)
+        end
+        acc << Token::Eof
+      end
     end
 
     def error_at(inputs, index, message)
