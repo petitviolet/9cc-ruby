@@ -3,7 +3,8 @@ try() {
   expected="$1"
   input="$2"
 
-  ./9cc "$input" > tmp.s
+  rbenv exec ruby -W0 lib/9cc.rb "$input" > tmp.s
+  # ./9cc "$input" > tmp.s
   gcc -o tmp tmp.s
   ./tmp
   actual="$?"
