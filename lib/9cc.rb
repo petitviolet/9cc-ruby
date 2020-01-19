@@ -1,6 +1,7 @@
 require 'byebug'
 require_relative '9cc/token'
 require_relative '9cc/node'
+require 'pp'
 
 class Program
   # @param user_input [String] Given program
@@ -51,38 +52,19 @@ class Program
 
   def run
     tokens = Token.tokenize(@user_input)
-    pp tokens
     nodes = Node::Parser.new(tokens).run
-    pp nodes
+    # PP.pp(tokens, $stderr)
+    # PP.pp(nodes, $stderr)
     outputs = []
 
     # Headers of assembly
     outputs << ".intel_syntax noprefix"
     outputs << ".global main"
     outputs << "main:"
-    #Generator.run(nodes, outputs)
-    case tokens
-    in [Token::Num => num, *rest]
-      # The first token must be a number
-      outputs << "  mov rax, #{num.value}"
-      tokens = rest
-      while true
-        case tokens
-        in [Token::Reserved['+'], Token::Num => num, *rest]
-          outputs << "  add rax, #{num.value}"
-          tokens = rest
-        in [Token::Reserved['-'], Token::Num => num, *rest]
-          outputs << "  sub rax, #{num.value}"
-          tokens = rest
-        in [Token::Eof]
-          outputs << "  ret"
-          break
-        end
-      end
-    else
-      Token.error_at(@user_input, 0, "is not a number")
-    end
+    Generator.run(nodes, outputs)
 
+    outputs << "  pop rax"
+    outputs << "  ret"
     puts outputs.join("\n")
   end
 
