@@ -12,11 +12,13 @@ module Token
       num_ch = ''
       user_inputs.each_char.with_index.reduce([]) do |acc, (char, i)|
         case char
-        in num if num_ch.empty? && num == '0'
-          error_at(user_inputs, i, 'Number must not start with 0')
         in num if num =~ /[0-9]/
           num_ch = "#{num_ch}#{num}"
         else
+          if num == '0'
+            error_at(user_inputs, i, 'Number must not start with 0')
+          end
+
           unless num_ch.empty?
             acc << Token::Num.new(num_ch.to_i) # cleanup num_ch == '00001' -> 1
             num_ch = ''
