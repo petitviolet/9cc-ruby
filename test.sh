@@ -10,21 +10,32 @@ try() {
   actual="$?"
 
   if [ "$actual" = "$expected" ]; then
-    echo "OK! $input => $actual"
+    logging "OK! $input => $actual"
   else
-    echo "NG! $input => $expected expected, but got $actual"
+    logging "NG! $input => $expected expected, but got $actual"
     exit 1
   fi
 }
 
+logging() {
+  echo "[$(now)]$1"
+}
+
+now() {
+  date +"%Y-%m-%d %H:%M:%S.%3N %Z"
+}
+
 run_test() {
+  rbenv exec ruby -v
+
+  logging "start"
   try 0 0
   try 42 42
   try 47 '5+6*7'
   try 15 '5*(9-6)'
   try 4 '(3+5)/2'
   try 23 '(1 + (2 + 3) * (4 + 5)) / 2'
-  echo OK
+  logging "OK"
 }
 
 if [ $# -eq 0 ]; then
