@@ -16,30 +16,36 @@ class Program
         return []
       in [Node::Num[value], *rest]
         assemblies << "  push #{value}"
-        run(rest, assemblies)
+        return run(rest, assemblies)
       else
-        assemblies << "  pop rdi"
-        assemblies << "  pop rax"
 
         case Array(nodes)
         in [Node::Add[left, right], *rest]
           run(left, assemblies)
           run(right, assemblies)
+          assemblies << "  pop rdi"
+          assemblies << "  pop rax"
           assemblies << "  add rax, rdi"
           run(rest, assemblies)
         in [Node::Sub[left, right], *rest]
           run(left, assemblies)
           run(right, assemblies)
+          assemblies << "  pop rdi"
+          assemblies << "  pop rax"
           assemblies << "  sub rax, rdi"
           run(rest, assemblies)
         in [Node::Mul[left, right], *rest]
           run(left, assemblies)
           run(right, assemblies)
+          assemblies << "  pop rdi"
+          assemblies << "  pop rax"
           assemblies << "  imul rax, rdi"
           run(rest, assemblies)
         in [Node::Div[left, right], *rest]
           run(left, assemblies)
           run(right, assemblies)
+          assemblies << "  pop rdi"
+          assemblies << "  pop rax"
           assemblies << "  cqo"
           assemblies << "  idiv rdi"
            run(rest, assemblies)
