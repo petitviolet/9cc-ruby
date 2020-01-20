@@ -8,6 +8,10 @@ module Node
   Sub = data :lhs, :rhs
   Mul = data :lhs, :rhs
   Div = data :lhs, :rhs
+  Lte = data :lhs, :rhs # less-than-equal
+  Lt  = data :lhs, :rhs # less-than
+  Eq  = data :lhs, :rhs # equal
+  Neq = data :lhs, :rhs # not-equal
   Num = data :value
 
   class Parser
@@ -89,8 +93,8 @@ module Node
         [nodes, tokens]
       end
 
-      # expr    = mul ("+" mul | "-" mul)*
-      def expr(tokens)
+      # add        = mul ("+" mul | "-" mul)*
+      def add(tokens)
         left, tokens = mul(tokens)
         node = nil
         nodes = []
@@ -106,6 +110,70 @@ module Node
             node = Node::Sub.new(left, right)
             nodes << node
             left = node
+          else
+            if nodes.empty?
+              nodes << left
+            end
+            break
+          end
+        end
+        [nodes, tokens]
+      end
+
+      # relational = add ("<" add | "<=" add | ">" add | ">=" add)*
+      def relational(tokens)
+        left, tokens = add(tokens)
+        node = nil
+        nodes = []
+        while true do
+          case tokens
+          in [Token::Reserved['<'], *tokens]
+            right, tokens = add(tokens)
+            node = Node::Lt.new(left, right)
+            nodes << node
+            left = node
+          in [Token::Reserved['<='], *tokens]
+            right, tokens = add(tokens)
+            node = Node::Lte.new(left, right)
+            nodes << node
+            left = node
+          in [Token::Reserved['>'], *tokens]
+            right, tokens = add(tokens)
+            node = Node::Lt.new(right, left)
+            nodes << node
+            left = node
+          in [Token::Reserved['>='], *tokens]
+            right, tokens = add(tokens)
+            node = Node::Lte.new(right, left)
+            nodes << node
+            left = node
+          else
+            if nodes.empty?
+              nodes << left
+            end
+            break
+          end
+        end
+        [nodes, tokens]
+      end
+
+      # equality   = relational ("==" relational | "!=" relational)*
+      def equality(tokens)
+        left, tokens = relational(tokens)
+        node = nil
+        nodes = []
+        while true do
+          case tokens
+          in [Token::Reserved['=='], *tokens]
+            right, tokens = add(tokens)
+            node = Node::Eq.new(left, right)
+            nodes << node
+            left = node
+          in [Token::Reserved['!='], *tokens]
+            right, tokens = add(tokens)
+            node = Node::Neq.new(left, right)
+            nodes << node
+            left = node
           in [Token::Eof]
             return [Array(left).first, [Token::Eof]]
           else
@@ -116,6 +184,11 @@ module Node
           end
         end
         [nodes, tokens]
+      end
+
+      # expr       = equality
+      def expr(tokens)
+        equality(tokens)
       end
   end
 end
