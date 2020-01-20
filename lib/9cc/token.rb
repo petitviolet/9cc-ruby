@@ -3,42 +3,26 @@ require 'rstructural'
 module Token
 
   class << self
-    PUNCTUATIONS = %w|+ - * / ( )|
+    PUNCTUATIONS = Regexp.union(%w|== != > >= <= < = ! + - * / ( )|)
+    TOKENIZE_REGEX = Regexp.union(/[A-Za-z]+/, /\d+/, PUNCTUATIONS, /\S/)
 
     # @param [String] user_inputs
     # @return [TokenKind]
     def tokenize(user_inputs)
-      # need rafactoring...
-      num_ch = ''
-      user_inputs.each_char.with_index.reduce([]) do |acc, (char, i)|
-        case char
-        in num if num =~ /[0-9]/
-          num_ch = "#{num_ch}#{num}"
+      acc = []
+      user_inputs.scan(TOKENIZE_REGEX) do |match|
+        case match
+        in num if num =~ /\d+/
+          acc << Token::Num.new(num.to_i)
+        in sign if PUNCTUATIONS.match?(sign)
+          acc << Token::Reserved.new(sign)
         else
-          if num == '0'
-            error_at(user_inputs, i, 'Number must not start with 0')
-          end
-
-          unless num_ch.empty?
-            acc << Token::Num.new(num_ch.to_i) # cleanup num_ch == '00001' -> 1
-            num_ch = ''
-          end
-          case char
-          in ' '
-            # skip
-          in char if PUNCTUATIONS.include?(char)
-            acc << Token::Reserved.new(char)
-          else
-            error_at(user_inputs, i, "Failed to tokenize. input = #{char}")
-          end
+          idx = Regexp.last_match.offset(0).first
+          error_at(user_inputs, idx, "Failed to tokenize. input = #{match}")
         end
-        acc
-      end.tap do |acc|
-        unless num_ch.empty?
-          acc << Token::Num.new(num_ch.to_i)
-        end
-        acc << Token::Eof
       end
+      acc << Token::Eof
+      acc
     end
 
     def error_at(inputs, index, message)
