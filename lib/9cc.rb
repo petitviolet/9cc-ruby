@@ -2,6 +2,7 @@ require 'byebug'
 require_relative '9cc/token'
 require_relative '9cc/node'
 require 'pp'
+require 'optionparser'
 
 class Program
   # @param user_input [String] Given program
@@ -56,11 +57,13 @@ class Program
     end
   end
 
-  def run
+  def run(options)
     tokens = Token.tokenize(@user_input)
     nodes = Node::Parser.new(tokens).run
-    # PP.pp(tokens, $stderr)
-    # PP.pp(nodes, $stderr)
+    if options[:verbose]
+      PP.pp(tokens, $stderr)
+      PP.pp(nodes, $stderr)
+    end
     outputs = []
 
     # Headers of assembly
@@ -76,4 +79,52 @@ class Program
 
 end
 
-Program.new(ARGV.first).run
+
+class CLI
+  def initialize(argv = ARGV)
+    @argv = argv
+    @opts = {
+      verbose: false,
+    }
+  end
+
+  def inputs
+    args = parser.parse(@argv)
+    expression = args.shift
+
+    show_usage if expression.empty?
+
+    [{expression: expression}, @opts]
+  rescue => e
+    show_usage(e)
+  end
+
+  private
+
+    def parser
+      return @parser if @parser
+
+      opt = OptionParser.new
+      opt.banner = "Usage: #{__FILE__} <expression> [options]"
+      opt.on_head(
+        "arguments:",
+        "#{opt.summary_indent}expression: whatever you want to generate assembly",
+        )
+      opt.separator('options:')
+      opt.on('-h', '--help', 'show this help') { |_| show_usage }
+      opt.on('-v', '--[no-]verbose', 'show debug logs') { |v| @opts[:verbose] = v }
+      @parser = opt
+    end
+
+    def show_usage(error = nil)
+      puts "error: #{error.message}\n" if error
+      puts <<~EOF
+      #{parser.to_s}
+      EOF
+      exit 1
+    end
+end
+
+args, opts = CLI.new.inputs
+
+Program.new(args[:expression]).run(opts)
