@@ -3,7 +3,7 @@ require 'rstructural'
 module Token
 
   class << self
-    PUNCTUATIONS = Regexp.union(%w|== != > >= <= < = ! + - * / ( )|)
+    PUNCTUATIONS = Regexp.union(%w|== != >= <= > < = ! + - * / ( )|)
     TOKENIZE_REGEX = Regexp.union(/[A-Za-z]+/, /\d+/, PUNCTUATIONS, /\S/)
 
     # @param [String] user_inputs
