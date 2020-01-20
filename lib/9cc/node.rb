@@ -50,19 +50,32 @@ module Node
         end
       end
 
-      # mul     = primary ("*" primary | "/" primary)*
+      # unary   = ("+" | "-")? primary
+      def unary(tokens)
+        case tokens
+        in [Token::Reserved['+'], *rest]
+          primary(rest)
+        in [Token::Reserved['-'], *rest]
+          value, rest = primary(rest)
+          [Node::Sub.new(Node::Num.new(0), value), rest]
+        in [*rest]
+          primary(rest)
+        end
+      end
+
+      # mul     = unary ("*" unary | "/" unary)*
       def mul(tokens)
-        left, tokens = primary(tokens)
+        left, tokens = unary(tokens)
         nodes = []
         while true do
           case tokens
           in [Token::Reserved['*'], *tokens]
-            right, tokens = primary(tokens)
+            right, tokens = unary(tokens)
             node = Node::Mul.new(left, right)
             nodes << node
             left = node
           in [Token::Reserved['/'], *tokens]
-            right, tokens = primary(tokens)
+            right, tokens = unary(tokens)
             node = Node::Div.new(left, right)
             nodes << node
             left = node

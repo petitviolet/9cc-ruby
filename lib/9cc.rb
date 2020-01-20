@@ -48,7 +48,7 @@ class Program
           assemblies << "  pop rax"
           assemblies << "  cqo"
           assemblies << "  idiv rdi"
-           run(rest, assemblies)
+          run(rest, assemblies)
         end
       end
 
