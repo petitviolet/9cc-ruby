@@ -220,6 +220,8 @@ module Node
         case tokens
         in [Token::Reserved[';'], *tokens]
           [node, tokens]
+        in [Token::Eof]
+          [node, tokens]
         end
       end
 
