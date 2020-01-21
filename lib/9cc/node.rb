@@ -9,10 +9,12 @@ module Node
   Mul = data :lhs, :rhs
   Div = data :lhs, :rhs
   Lte = data :lhs, :rhs # less-than-equal
-  Lt  = data :lhs, :rhs # less-than
-  Eq  = data :lhs, :rhs # equal
+  Lt = data :lhs, :rhs # less-than
+  Eq = data :lhs, :rhs # equal
   Neq = data :lhs, :rhs # not-equal
   Num = data :value
+  Ident = data :name
+  Assign = data :lhs, :rhs
 
   class Parser
 
@@ -22,12 +24,12 @@ module Node
     end
 
     def run
-      case expr(@tokens)
+      case program(@tokens)
       in [nodes, [Token::Eof]]
         nodes
       in [nodes, rest] # else
         raise RuntimeError, <<~MSG
-          tokens must be empty after run `expr`.
+          tokens must be empty after run `program`.
             inputs: #{@tokens}
             nodes: #{nodes}
             tokens: #{rest}
@@ -37,11 +39,13 @@ module Node
 
     private
 
-      # primary = num | "(" expr ")"
+      # primary    = num | ident | "(" expr ")"
       def primary(tokens)
         case tokens
         in [Token::Num[value], *tokens]
           [Node::Num.new(value), tokens]
+        in [Token::Ident[name], *tokens]
+          [Node::Ident.new(name), tokens]
         in [Token::Reserved['('], *tokens]
           case expr(tokens)
           in [node, [Token::Reserved[')'], *tokens]]
@@ -54,7 +58,7 @@ module Node
         end
       end
 
-      # unary   = ("+" | "-")? primary
+      # unary      = ("+" | "-")? primary
       def unary(tokens)
         case tokens
         in [Token::Reserved['+'], *rest]
@@ -67,7 +71,7 @@ module Node
         end
       end
 
-      # mul     = unary ("*" unary | "/" unary)*
+      # mul        = unary ("*" unary | "/" unary)*
       def mul(tokens)
         left, tokens = unary(tokens)
         nodes = []
@@ -90,7 +94,7 @@ module Node
             break
           end
         end
-        [nodes, tokens]
+        [nodes.flatten, tokens]
       end
 
       # add        = mul ("+" mul | "-" mul)*
@@ -117,7 +121,7 @@ module Node
             break
           end
         end
-        [nodes, tokens]
+        [nodes.flatten, tokens]
       end
 
       # relational = add ("<" add | "<=" add | ">" add | ">=" add)*
@@ -154,7 +158,7 @@ module Node
             break
           end
         end
-        [nodes, tokens]
+        [nodes.flatten, tokens]
       end
 
       # equality   = relational ("==" relational | "!=" relational)*
@@ -174,8 +178,6 @@ module Node
             node = Node::Neq.new(left, right)
             nodes << node
             left = node
-          in [Token::Eof]
-            return [Array(left).first, [Token::Eof]]
           else
             if nodes.empty?
               nodes << left
@@ -183,12 +185,49 @@ module Node
             break
           end
         end
-        [nodes, tokens]
+        [nodes.flatten, tokens]
       end
 
-      # expr       = equality
+      # assign     = equality ("=" assign)?
+      def assign(tokens)
+        left, tokens = equality(tokens)
+        case tokens
+        in [Token::Reserved['='], *tokens]
+          right, tokens = assign(tokens)
+          node = Node::Assign.new(left.flatten.first, right)
+          [node, tokens]
+        else
+          [left, tokens]
+        end
+      end
+
+      # expr       = assign
       def expr(tokens)
-        equality(tokens)
+        assign(tokens)
+      end
+
+      # statement  = expr ";"
+      def statement(tokens)
+        node, tokens = expr(tokens)
+        case tokens
+        in [Token::Reserved[';'], *tokens]
+          [node, tokens]
+        end
+      end
+
+      # program    = stmt*
+      def program(tokens)
+        node, tokens = statement(tokens)
+        nodes = Array[node].flatten
+        until tokens.empty? do
+          case tokens
+          in [Token::Eof]
+            return [nodes, [Token::Eof]]
+          else
+            node, tokens = statement(tokens)
+            nodes << node
+          end
+        end
       end
   end
 end
