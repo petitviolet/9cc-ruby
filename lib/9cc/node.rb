@@ -228,7 +228,7 @@ module Node
       # program    = stmt*
       def program(tokens)
         node, tokens = statement(tokens)
-        nodes = Array[node].flatten
+        nodes = [node]
         until tokens.empty? do
           case tokens
           in [Token::Eof]
