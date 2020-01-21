@@ -13,7 +13,7 @@ module Node
   Eq = data :lhs, :rhs # equal
   Neq = data :lhs, :rhs # not-equal
   Num = data :value
-  Ident = data :name
+  Lvar = data :name # local variable
   Assign = data :lhs, :rhs
 
   class Parser
@@ -45,7 +45,7 @@ module Node
         in [Token::Num[value], *tokens]
           [Node::Num.new(value), tokens]
         in [Token::Ident[name], *tokens]
-          [Node::Ident.new(name), tokens]
+          [Node::Lvar.new(name), tokens]
         in [Token::Reserved['('], *tokens]
           case expr(tokens)
           in [node, [Token::Reserved[')'], *tokens]]
