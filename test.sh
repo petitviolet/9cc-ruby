@@ -53,6 +53,8 @@ run_test() {
   try 5 'a = 5; a'
   try 5 'a = 2; a + 3'
   try 5 'a = 2; b = 7; b - a'
+  try 8 'hoge = 2; foo = 3; bar = 4; (foo * bar / 2) + hoge'
+  try 16 'hoge = 2; foo = 3; bar = 4; baz = (foo * bar / 2) + hoge; baz + baz'
 
   logging "OK"
 }
