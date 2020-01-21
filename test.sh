@@ -46,6 +46,7 @@ run_test() {
   try 0 '2 != 2'
   try 0 '1 == 2'
   try 1 '2 == 2'
+  try 5 'a = 2; b = 3; a + b'
   logging "OK"
 }
 

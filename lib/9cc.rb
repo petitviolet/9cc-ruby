@@ -29,8 +29,6 @@ class Program
     outputs << "main:"
     Generator.run(nodes, outputs)
 
-    outputs << "  pop rax"
-    outputs << "  ret"
     puts outputs.join("\n")
   end
 
