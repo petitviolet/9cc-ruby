@@ -50,6 +50,10 @@ run_test() {
   try 0 '2 != 2'
   try 0 '1 == 2'
   try 1 '2 == 2'
+  try 5 'a = 5; a'
+  try 5 'a = 2; a + 3'
+  try 5 'a = 2; b = 7; b - a'
+
   logging "OK"
 }
 
