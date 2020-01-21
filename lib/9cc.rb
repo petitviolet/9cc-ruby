@@ -6,8 +6,9 @@ require 'optionparser'
 
 class Program
   # @param user_input [String] Given program
-  def initialize(user_input)
+  def initialize(user_input, opts)
     @user_input = user_input
+    @options = opts
   end
 
   class Generator
@@ -77,13 +78,15 @@ class Program
     end
   end
 
-  def run(options)
+  def pp(obj)
+    PP.pp(obj, $stderr) if @options[:verbose]
+  end
+
+  def run
     tokens = Token.tokenize(@user_input)
+    pp tokens
     nodes = Node::Parser.new(tokens).run
-    if options[:verbose]
-      PP.pp(tokens, $stderr)
-      PP.pp(nodes, $stderr)
-    end
+    pp nodes
     outputs = []
 
     # Headers of assembly
@@ -147,4 +150,4 @@ end
 
 args, opts = CLI.new.inputs
 
-Program.new(args[:expression]).run(opts)
+Program.new(args[:expression], opts).run
