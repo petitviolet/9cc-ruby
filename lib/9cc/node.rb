@@ -194,8 +194,13 @@ module Node
         case tokens
         in [Token::Reserved['='], *tokens]
           right, tokens = assign(tokens)
-          node = Node::Assign.new(left.flatten.first, right)
-          [node, tokens]
+          case left.flatten
+          in [Node::Lvar => lvar]
+            node = Node::Assign.new(lvar, right)
+            [node, tokens]
+          else
+            raise ArgumentError.new("invalid input. left tree of assignment must be Node::Lvar, but #{left}")
+          end
         else
           [left, tokens]
         end
