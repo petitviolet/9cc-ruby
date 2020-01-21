@@ -13,7 +13,7 @@ module Node
   Eq = data :lhs, :rhs # equal
   Neq = data :lhs, :rhs # not-equal
   Num = data :value
-  Lvar = data :name # local variable
+  Lvar = data :name, :number # local variable
   Assign = data :lhs, :rhs
 
   class Parser
@@ -21,6 +21,7 @@ module Node
     # @param [Array<Token>] tokens
     def initialize(tokens)
       @tokens = tokens
+      @lvar_counter = 0
     end
 
     def run
@@ -45,7 +46,9 @@ module Node
         in [Token::Num[value], *tokens]
           [Node::Num.new(value), tokens]
         in [Token::Ident[name], *tokens]
-          [Node::Lvar.new(name), tokens]
+          number = @lvar_counter
+          @lvar_counter += 1
+          [Node::Lvar.new(name, number), tokens]
         in [Token::Reserved['('], *tokens]
           case expr(tokens)
           in [node, [Token::Reserved[')'], *tokens]]
