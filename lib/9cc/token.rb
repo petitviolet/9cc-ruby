@@ -5,6 +5,8 @@ module Token
 
   # Sign
   Reserved = data :char
+  # Identifier
+  Ident = data :name
   # Number
   Num = data :value
   # End of file
@@ -24,6 +26,8 @@ module Token
       user_inputs.scan(TOKENIZE_REGEX) do |match|
         idx = Regexp.last_match.offset(0).first
         case match
+        in ident if IDENT_REGEX.match?(ident)
+          acc << Token::Ident.new(ident)
         in num if NUM_REGEX.match?(num)
           acc << Token::Num.new(num.to_i)
         in sign if PUNCTUATIONS.match?(sign)
