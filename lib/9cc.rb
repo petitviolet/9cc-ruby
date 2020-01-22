@@ -21,13 +21,8 @@ class Program
     pp tokens
     nodes = Node::Parser.new(tokens).run
     pp nodes
-    outputs = []
 
-    # Headers of assembly
-    outputs << ".intel_syntax noprefix"
-    outputs << ".global main"
-    outputs << "main:"
-    Generator.run(nodes, outputs)
+    outputs = Generator.run(nodes, outputs: [])
 
     puts outputs.join("\n")
   end
