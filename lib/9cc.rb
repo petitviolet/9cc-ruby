@@ -22,7 +22,7 @@ class Program
     nodes = Node::Parser.new(tokens).run
     pp nodes
 
-    outputs = Generator.run(nodes, outputs: [])
+    outputs = Generator.run(nodes, outputs: [], verbose: @options[:verbose])
 
     puts outputs.join("\n")
   end

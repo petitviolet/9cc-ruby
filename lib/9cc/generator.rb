@@ -5,19 +5,22 @@ class Generator
   # @param statements [Array<Array<Node>>]
   # @param outputs [Array]
   # @return [Array<String>]
-  def self.run(statements, outputs: [])
-    generator = new(outputs)
+  def self.run(statements, outputs: [], verbose: false)
+    generator = new(outputs, verbose: verbose)
     generator.run(statements)
   end
 
-  def initialize(outputs)
+  def initialize(outputs, verbose: false)
     @outputs = outputs
     @lvar_count = 1
+    @verbose = verbose
   end
 
   def run(statements)
     statements.each do |nodes|
+      @outputs << "  # statement: #{Node.show(nodes)}" if @verbose
       is_return = self.run_statement(nodes)
+      @outputs << "  # ^^^ statement: #{Node.show(nodes)}" if @verbose
       @outputs << "  pop rax"
       break if is_return
     end
@@ -36,7 +39,7 @@ class Generator
       in []
         return false
       in [Node::Ret[node], *rest]
-        @outputs << "  # return!"
+        @outputs << "  # return!" if @verbose
         if node.nil?
           return true
         else
@@ -129,17 +132,29 @@ class Generator
 
     def prologue
       arr = []
-      arr << "  push rbp # headers"
-      arr << "  mov rbp, rsp"
-      arr << "  sub rsp, #{(@lvar_count - 1) * 8} # ^^^ headers"
+      if @verbose
+        arr << "  push rbp"
+        arr << "  mov rbp, rsp"
+        arr << "  sub rsp, #{(@lvar_count - 1) * 8}"
+      else
+        arr << "  push rbp"
+        arr << "  mov rbp, rsp"
+        arr << "  sub rsp, #{(@lvar_count - 1) * 8}"
+      end
       arr
     end
 
     def epilogue
       arr = []
-      arr << "  mov rsp, rbp # epilogue"
-      arr << "  pop rbp"
-      arr << "  ret # ^^^ epilogue"
+      if @verbose
+        arr << "  mov rsp, rbp # epilogue"
+        arr << "  pop rbp"
+        arr << "  ret # ^^^ epilogue"
+      else
+        arr << "  mov rsp, rbp"
+        arr << "  pop rbp"
+        arr << "  ret"
+      end
     end
 
     # @param node [Node::Lvar]
@@ -151,9 +166,15 @@ class Generator
         @lvar_count += 1
         @lvars[node.name] = offset
       end
-      @outputs << "  mov rax, rbp"
-      @outputs << "  sub rax, #{offset} # #{node.name}"
-      @outputs << "  push rax"
+      if @verbose
+        @outputs << "  mov rax, rbp"
+        @outputs << "  sub rax, #{offset} # #{node.name}"
+        @outputs << "  push rax"
+      else
+        @outputs << "  mov rax, rbp"
+        @outputs << "  sub rax, #{offset}"
+        @outputs << "  push rax"
+      end
     end
 end
 
