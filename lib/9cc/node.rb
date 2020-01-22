@@ -131,118 +131,80 @@ module Node
       # mul        = unary ("*" unary | "/" unary)*
       def mul(tokens)
         left, tokens = unary(tokens)
-        nodes = []
-        while true do
+        until tokens.empty? do
           case tokens
           in [Token::Reserved['*'], *tokens]
             right, tokens = unary(tokens)
-            node = Node::Mul.new(left, right)
-            nodes << node
-            left = node
+            left = Node::Mul.new(left, right)
           in [Token::Reserved['/'], *tokens]
             right, tokens = unary(tokens)
-            node = Node::Div.new(left, right)
-            nodes << node
-            left = node
+            left = Node::Div.new(left, right)
           else
-            if nodes.empty?
-              nodes << left
-            end
             break
           end
         end
-        [nodes.flatten, tokens]
+        [left, tokens]
       end
 
       # add        = mul ("+" mul | "-" mul)*
       def add(tokens)
         left, tokens = mul(tokens)
-        node = nil
-        nodes = []
-        while true do
+        until tokens.empty? do
           case tokens
           in [Token::Reserved['+'], *tokens]
             right, tokens = mul(tokens)
-            node = Node::Add.new(left, right)
-            nodes << node
-            left = node
+            left = Node::Add.new(left, right)
           in [Token::Reserved['-'], *tokens]
             right, tokens = mul(tokens)
-            node = Node::Sub.new(left, right)
-            nodes << node
-            left = node
+            left = Node::Sub.new(left, right)
           else
-            if nodes.empty?
-              nodes << left
-            end
             break
           end
         end
-        [nodes.flatten, tokens]
+        [left, tokens]
       end
 
       # relational = add ("<" add | "<=" add | ">" add | ">=" add)*
       def relational(tokens)
         left, tokens = add(tokens)
-        node = nil
         nodes = []
-        while true do
+        until tokens.empty? do
           case tokens
           in [Token::Reserved['<'], *tokens]
             right, tokens = add(tokens)
-            node = Node::Lt.new(left, right)
-            nodes << node
-            left = node
+            left = Node::Lt.new(left, right)
           in [Token::Reserved['<='], *tokens]
             right, tokens = add(tokens)
-            node = Node::Lte.new(left, right)
-            nodes << node
-            left = node
+            left = Node::Lte.new(left, right)
           in [Token::Reserved['>'], *tokens]
             right, tokens = add(tokens)
-            node = Node::Lt.new(right, left)
-            nodes << node
-            left = node
+            left = Node::Lt.new(right, left)
           in [Token::Reserved['>='], *tokens]
             right, tokens = add(tokens)
-            node = Node::Lte.new(right, left)
-            nodes << node
-            left = node
+            left = Node::Lte.new(right, left)
           else
-            if nodes.empty?
-              nodes << left
-            end
             break
           end
         end
-        [nodes.flatten, tokens]
+        [left, tokens]
       end
 
       # equality   = relational ("==" relational | "!=" relational)*
       def equality(tokens)
         left, tokens = relational(tokens)
-        node = nil
-        nodes = []
-        while true do
+        until tokens.empty? do
           case tokens
           in [Token::Reserved['=='], *tokens]
             right, tokens = add(tokens)
-            node = Node::Eq.new(left, right)
-            nodes << node
-            left = node
+            left = Node::Eq.new(left, right)
           in [Token::Reserved['!='], *tokens]
             right, tokens = add(tokens)
-            node = Node::Neq.new(left, right)
-            nodes << node
-            left = node
+            left = Node::Neq.new(left, right)
           else
-            if nodes.empty?
-              nodes << left
-            end
             break
           end
         end
-        [nodes.flatten, tokens]
+        [left, tokens]
       end
 
       # assign     = equality ("=" assign)?
@@ -251,8 +213,8 @@ module Node
         case tokens
         in [Token::Reserved['='], *tokens]
           right, tokens = assign(tokens)
-          case left.flatten
-          in [Node::Lvar => lvar]
+          case left
+          in Node::Lvar => lvar
             node = Node::Assign.new(lvar, right)
             [node, tokens]
           else
