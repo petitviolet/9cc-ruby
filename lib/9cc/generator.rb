@@ -17,8 +17,9 @@ class Generator
 
   def run(statements)
     statements.each do |nodes|
-      self.run_statement(nodes)
+      is_return = self.run_statement(nodes)
       @outputs << "  pop rax"
+      break if is_return
     end
 
     @outputs = @outputs + epilogue
@@ -29,10 +30,19 @@ class Generator
 
   private
 
+    # @return [Boolean] if a statement finishes with `return`
     def run_statement(nodes)
       case Array(nodes).flatten
       in []
-        return []
+        return false
+      in [Node::Ret[node], *rest]
+        @outputs << "  # return!"
+        if node.nil?
+          return true
+        else
+          run_statement(node)
+          return true
+        end
       in [Node::Num[value], *rest]
         @outputs << "  push #{value}"
         return run_statement(rest)
@@ -106,6 +116,7 @@ class Generator
       end
 
       @outputs << "  push rax"
+      false
     end
 
     def headers

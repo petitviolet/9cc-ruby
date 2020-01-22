@@ -15,6 +15,7 @@ module Node
   Num = data :value
   Lvar = data :name # local variable
   Assign = data :lhs, :rhs
+  Ret = data :node # return
 
   class Parser
 
@@ -206,12 +207,20 @@ module Node
         end
       end
 
-      # expr       = assign
+      # expr       = return (primary)? | assign
       def expr(tokens)
-        assign(tokens)
+        case tokens
+        in [Token::Ret]
+          [Node::Ret.new(nil), tokens]
+        in [Token::Ret, *rest]
+          node, tokens = primary(rest)
+          [Node::Ret.new(node), tokens]
+        else
+          assign(tokens)
+        end
       end
 
-      # statement  = expr ";"
+      # statement  = expr ";"?
       def statement(tokens)
         node, tokens = expr(tokens)
         case tokens

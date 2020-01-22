@@ -9,6 +9,8 @@ module Token
   Ident = data :name
   # Number
   Num = data :value
+  # Return
+  Ret = const
   # End of file
   Eof = const
 
@@ -26,6 +28,8 @@ module Token
       user_inputs.scan(TOKENIZE_REGEX) do |match|
         idx = Regexp.last_match.offset(0).first
         case match
+        in "return"
+          acc << Token::Ret
         in ident if IDENT_REGEX.match?(ident)
           acc << Token::Ident.new(ident)
         in num if NUM_REGEX.match?(num)
