@@ -21,7 +21,6 @@ module Node
     # @param [Array<Token>] tokens
     def initialize(tokens)
       @tokens = tokens
-      @lvar_counter = 0
     end
 
     def run
