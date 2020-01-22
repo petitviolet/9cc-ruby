@@ -8,6 +8,11 @@ try() {
   rbenv exec ruby -W0 lib/9cc.rb "$input" $option > tmp.s
   # ./9cc "$input" > tmp.s
   gcc -o tmp tmp.s
+  if [ -n $option ]; then
+    echo "==="
+    cat ./tmp.s
+    echo "==="
+  fi
   ./tmp
   actual="$?"
 
