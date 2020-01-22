@@ -4,18 +4,74 @@ require_relative './token'
 module Node
   extend ADT
 
-  Add = data :lhs, :rhs
-  Sub = data :lhs, :rhs
-  Mul = data :lhs, :rhs
-  Div = data :lhs, :rhs
-  Lte = data :lhs, :rhs # less-than-equal
-  Lt = data :lhs, :rhs # less-than
-  Eq = data :lhs, :rhs # equal
-  Neq = data :lhs, :rhs # not-equal
-  Num = data :value
-  Lvar = data :name # local variable
-  Assign = data :lhs, :rhs
-  Ret = data :node # return
+  def self.show(node)
+    if node.is_a?(Enumerable)
+      node.map { |s| show(s) }.join(" ")
+    else
+      node.show
+    end
+  end
+
+  Add = data :lhs, :rhs do
+    def show
+      "#{Node.show(lhs)} + #{Node.show(rhs)}"
+    end
+  end
+  Sub = data :lhs, :rhs do
+    def show
+      "#{Node.show(lhs)} - #{Node.show(rhs)}"
+    end
+  end
+  Mul = data :lhs, :rhs do
+    def show
+      "#{Node.show(lhs)} * #{Node.show(rhs)}"
+    end
+  end
+  Div = data :lhs, :rhs do
+    def show
+      "#{Node.show(lhs)} / #{Node.show(rhs)}"
+    end
+  end
+  Lte = data :lhs, :rhs do # less-than-equal
+    def show
+      "#{Node.show(lhs)} <= #{Node.show(rhs)}"
+    end
+  end
+  Lt = data :lhs, :rhs do # less-than
+    def show
+      "#{Node.show(lhs)} < #{Node.show(rhs)}"
+    end
+  end
+  Eq = data :lhs, :rhs do # Equal
+    def show
+      "#{Node.show(lhs)} == #{Node.show(rhs)}"
+    end
+  end
+  Neq = data :lhs, :rhs do # NotEqual
+    def show
+      "#{Node.show(lhs)} != #{Node.show(rhs)}"
+    end
+  end
+  Num = data :value do # number
+    def show
+      value.to_s
+    end
+  end
+  Lvar = data :name do # local variable
+    def show
+      name.to_str
+    end
+  end
+  Assign = data :lhs, :rhs do
+    def show
+      "#{Node.show(lhs)} = #{Node.show(rhs)}"
+    end
+  end
+  Ret = data :node do # return
+    def show
+      "return #{Node.show(node)}"
+    end
+  end
 
   class Parser
 
