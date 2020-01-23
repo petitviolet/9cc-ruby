@@ -25,7 +25,7 @@ module Token
     # @return [TokenKind]
     def tokenize(user_inputs)
       acc = []
-      user_inputs.scan(TOKENIZE_REGEX) do |match|
+      user_inputs.gsub(/\\n/, ' ').scan(TOKENIZE_REGEX) do |match|
         idx = Regexp.last_match.offset(0).first
         case match
         in "return"
