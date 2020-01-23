@@ -228,11 +228,11 @@ module Node
       # expr       = return (primary)? | assign
       def expr(tokens)
         case tokens
-        in [Token::Ret]
-          [Node::Ret.new(nil), tokens]
+        in [Token::Ret] | [Token::Ret, Token::Eof]
+          [Node::Ret.new(nil), [Token::Eof]]
         in [Token::Ret, *rest]
           node, tokens = primary(rest)
-          [Node::Ret.new(node), tokens]
+          [Node::Ret.new(node), [Token::Eof]]
         else
           assign(tokens)
         end
@@ -240,19 +240,36 @@ module Node
 
       # statement  = expr ";"?
       def statement(tokens)
-        node, tokens = expr(tokens)
-        case tokens
-        in [Token::Reserved[';'], *tokens]
-          [node, tokens]
-        in [Token::Eof]
-          [node, tokens]
+        statements = []
+        rest = tokens
+        until rest.empty?
+          expression = []
+
+          loop do
+            case rest.shift
+            in Token::Reserved[';'] | Token::Eof
+              break
+            in t
+              expression << t
+            end
+          end
+          node, t = expr(expression)
+          case [node, t]
+          in [node, [Token::Eof]]
+            statements << node
+            return [statements, [Token::Eof]]
+          else
+            statements << node
+          end
         end
+        [statements, tokens]
       end
 
       # program    = stmt*
       def program(tokens)
         node, tokens = statement(tokens)
         nodes = [node]
+        return [nodes, [Token::Eof]] if tokens.empty?
         until tokens.empty? do
           case tokens
           in [Token::Eof]
