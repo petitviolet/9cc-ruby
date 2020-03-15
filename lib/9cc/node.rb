@@ -278,14 +278,13 @@ module Node
       #              | "if" "(" expr ")" stmt ("else" stmt)?
       def statement(tokens)
         statements = []
-        rest = tokens
-        until rest.empty?
+        until tokens.empty?
           node = nil
           rest_tokens = nil
 
-          case rest
+          case tokens
           in [Token::Reserved['if'], *]
-            node, rest_tokens = if_statement(rest)
+            node, rest_tokens = if_statement(tokens)
           else
             expression_tokens = tokens_until(tokens, Token::Reserved.new(';'), Token::Eof, nil)
             node, rest_tokens = expr(expression_tokens)
