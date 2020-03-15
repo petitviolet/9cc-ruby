@@ -109,11 +109,11 @@ module Node
         end
       end
 
-      def tokens_until(tokens, until_token)
+      def tokens_until(tokens, *expected_tokens)
         arr = []
         loop do
           t = tokens.shift
-          break if t == until_token || t.nil?
+          break if expected_tokens.include?(t) || t.nil?
           arr << t
         end
         return arr
@@ -261,47 +261,41 @@ module Node
         end
       end
 
+      def if_statement(tokens)
+        expect_next_token!(tokens, Token::Reserved.new('if'))
+        expect_next_token!(tokens, Token::Reserved.new('('))
+        cond_tokens = tokens_until(tokens, Token::Reserved.new(')'))
+        cond, _ = expr(cond_tokens)
+        then_side_tokens = tokens_until(tokens, Token::Reserved.new('else'))
+        then_side, _ = statement(then_side_tokens)
+        else_side, t = statement(tokens)
+        node = If.new(cond, then_side, else_side)
+        return [node, t]
+      end
+
       # statement  = expr ";"?
       #              | "if" "(" expr ")" stmt ("else" stmt)?
       def statement(tokens)
         statements = []
         rest = tokens
         until rest.empty?
+          node = nil
+          rest_tokens = nil
 
-          case rest.shift
-          in Token::Reserved['if']
-            expect_next_token!(rest, Token::Reserved.new('('))
-            cond_tokens = tokens_until(rest, Token::Reserved.new(')'))
-            cond, _ = expr(cond_tokens)
-            then_side_tokens = tokens_until(rest, Token::Reserved.new('else'))
-            then_side, _ = statement(then_side_tokens)
-            else_side, t = statement(rest)
-            node = If.new(cond, then_side, else_side)
-            case [node, t]
+          case rest
+          in [Token::Reserved['if'], *]
+            node, rest_tokens = if_statement(rest)
+          else
+            expression_tokens = tokens_until(tokens, Token::Reserved.new(';'), Token::Eof, nil)
+            node, rest_tokens = expr(expression_tokens)
+          end
+
+          case [node, rest_tokens]
             in [node, [Token::Eof]]
-              statements << node
-              return [statements, [Token::Eof]]
-            else
-              statements << node
-            end
-          in _t
-            expression = [_t]
-            loop do
-              case rest.shift
-              in Token::Reserved[';'] | Token::Eof | nil
-                break
-              in t
-                expression << t
-              end
-            end
-            node, t = expr(expression)
-            case [node, t]
-              in [node, [Token::Eof]]
-              statements << node
-              return [statements, [Token::Eof]]
-            else
-              statements << node
-            end
+            statements << node
+            return [statements, [Token::Eof]]
+          else
+            statements << node
           end
         end
         [statements, tokens]
