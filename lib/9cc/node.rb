@@ -6,7 +6,7 @@ module Node
 
   def self.show(node)
     if node.is_a?(Enumerable)
-      node.map { |s| show(s) }.join(" ")
+      node.map { |s| show(s) }.join("; ")
     else
       node.show
     end
@@ -59,7 +59,7 @@ module Node
   end
   Lvar = data :name do # local variable
     def show
-      name.to_str
+      name.to_s
     end
   end
   Assign = data :lhs, :rhs do
