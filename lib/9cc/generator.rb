@@ -25,10 +25,7 @@ class Generator
       break if is_return
     end
 
-    @outputs = @outputs + epilogue
-    @outputs = prologue + @outputs
-    @outputs = headers + @outputs
-    @outputs
+    headers + prologue + @outputs + epilogue
   end
 
   private
