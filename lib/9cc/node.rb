@@ -261,6 +261,7 @@ module Node
         end
       end
 
+      # "if" "(" expr ")" stmt ("else" stmt)?
       def if_statement(tokens)
         expect_next_token!(tokens, Token::Reserved.new('if'))
         expect_next_token!(tokens, Token::Reserved.new('('))
