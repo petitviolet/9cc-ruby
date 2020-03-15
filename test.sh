@@ -67,6 +67,9 @@ run_test() {
   try 6 '1 + 2 + 3; return'
   try 6 '1 + 2; return (1 + 2 + 3); 7 + 8;'
   try 3 '1 + 2; return; 7 + 8;'
+  try 5 'if (1 > 0) 5 else 3'
+  try 3 'if (1 < 0) 5 else 3'
+  try 5 'if (1 + 2 + 3 == 6) 5 else 3'
 
   logging "OK"
 }

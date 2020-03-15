@@ -15,7 +15,7 @@ module Token
   Eof = const
 
   class << self
-    PUNCTUATIONS = Regexp.union(%w|== != >= <= > < = ! + - * / ( ) ;|)
+    PUNCTUATIONS = Regexp.union(%w|== != >= <= > < = ! + - * / ( ) ; if else { }|)
     NUM_REGEX = Regexp.compile(/\d+/)
     IDENT_REGEX = Regexp.compile(/[A-Za-z]+/)
     SPACE_REGEX = Regexp.compile(/\S+/)
@@ -30,12 +30,12 @@ module Token
         case match
         in "return"
           acc << Token::Ret
+        in sign if PUNCTUATIONS.match?(sign)
+          acc << Token::Reserved.new(sign)
         in ident if IDENT_REGEX.match?(ident)
           acc << Token::Ident.new(ident)
         in num if NUM_REGEX.match?(num)
           acc << Token::Num.new(num.to_i)
-        in sign if PUNCTUATIONS.match?(sign)
-          acc << Token::Reserved.new(sign)
         else
           error_at(user_inputs, idx, "Failed to tokenize. input = #{match}")
         end

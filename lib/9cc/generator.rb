@@ -63,6 +63,18 @@ class Generator
         @outputs << "  mov [rax], rdi"
         @outputs << "  push rdi"
         return run_statement(rest)
+      in [Node::If[cond, then_side, else_side]]
+        label_number = next_label_number
+        run_statement(cond)
+        @outputs << "  pop rax"
+        @outputs << "  cmp rax, 0"
+        @outputs << "  je .Lelse#{label_number}"
+        run_statement(then_side)
+        @outputs << "  jmp .Lend#{label_number}"
+        @outputs << ".Lelse#{label_number}:"
+        run_statement(else_side)
+        @outputs << ".Lend#{label_number}:"
+        return run_statement(rest)
       else
         run_left_and_right = ->(left, right, rest, &block) do
           run_statement(left)
@@ -175,6 +187,12 @@ class Generator
         @outputs << "  sub rax, #{offset}"
         @outputs << "  push rax"
       end
+    end
+
+    def next_label_number
+      @label_cnt ||= 0
+      @label_cnt += 1
+      return @label_cnt
     end
 end
 
