@@ -11,12 +11,12 @@ See [test.sh](./test.sh).
 Docker image for this repository is [petitviolet:9cc-ruby](https://hub.docker.com/r/petitviolet/9cc-ruby) on docker hub.
 
 ```console
-$ docker run --rm -v $PWD:/9cc -w /9cc petitviolet:9cc-ruby sh -c "./test.sh 8 'if (2 > 1) 16 else 8'"
-$ docker run --rm -v $PWD:/9cc -w /9cc petitviolet:9cc-ruby sh -c "./test.sh"
+$ docker run --rm -v $PWD:/9cc -w /9cc petitviolet/9cc-ruby sh -c "./test.sh 8 'if (2 > 1) 16 else 8'"
+$ docker run --rm -v $PWD:/9cc -w /9cc petitviolet/9cc-ruby sh -c "./test.sh"
 ```
 
 ```console
-$ docker run -tid -v $PWD:/9cc -w /9cc --name 9cc petitviolet:9cc-ruby bash$ docker run -tid -v $PWD:/9cc -w /9cc --name 9cc petitviolet:9cc-ruby bash
+$ docker run -tid -v $PWD:/9cc -w /9cc --name 9cc petitviolet/9cc-ruby bash
 $ docker exec -it 9cc sh -c "./test.sh 16 '1 + 2 + 3' -v"
 
 [Token::Num(value: 1),
