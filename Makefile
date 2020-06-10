@@ -1,9 +1,7 @@
 CFLAGS=-std=c11 -g -static
 ARG=
 
-9cc: 9cc.c
-
-test: 9cc
+test:
 	./test.sh
 
 docker/test:
