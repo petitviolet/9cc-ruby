@@ -43,16 +43,16 @@ module Node
     def primary(tokens)
       case tokens
         in [Token::Num[value], *tokens]
-        [Node::Num.new(value), tokens]
+          [Node::Num.new(value), tokens]
         in [Token::Ident[name], *tokens]
-        [Node::Lvar.new(name), tokens]
+          [Node::Lvar.new(name), tokens]
         in [Token::Reserved['('], *tokens]
-        case expr(tokens)
-          in [node, [Token::Reserved[')'], *tokens]]
-          return [node, tokens]
-        else
-          raise ArgumentError.new("next token must be ')'. tokens: #{tokens}, expr: #{expr(tokens)}")
-        end
+          case expr(tokens)
+            in [node, [Token::Reserved[')'], *tokens]]
+            return [node, tokens]
+          else
+            raise ArgumentError.new("next token must be ')'. tokens: #{tokens}, expr: #{expr(tokens)}")
+          end
       else
         raise ArgumentError.new("invalid input. tokens: #{tokens}")
       end
@@ -62,12 +62,12 @@ module Node
     def unary(tokens)
       case tokens
         in [Token::Reserved['+'], *rest]
-        primary(rest)
+          primary(rest)
         in [Token::Reserved['-'], *rest]
-        value, rest = primary(rest)
+          value, rest = primary(rest)
         [Node::Sub.new(Node::Num.new(0), value), rest]
         in [*rest]
-        primary(rest)
+          primary(rest)
       end
     end
 
@@ -77,11 +77,11 @@ module Node
       until tokens.empty? do
         case tokens
           in [Token::Reserved['*'], *tokens]
-          right, tokens = unary(tokens)
-          left = Node::Mul.new(left, right)
+            right, tokens = unary(tokens)
+            left = Node::Mul.new(left, right)
           in [Token::Reserved['/'], *tokens]
-          right, tokens = unary(tokens)
-          left = Node::Div.new(left, right)
+            right, tokens = unary(tokens)
+            left = Node::Div.new(left, right)
         else
           break
         end
@@ -95,11 +95,11 @@ module Node
       until tokens.empty? do
         case tokens
           in [Token::Reserved['+'], *tokens]
-          right, tokens = mul(tokens)
-          left = Node::Add.new(left, right)
+            right, tokens = mul(tokens)
+            left = Node::Add.new(left, right)
           in [Token::Reserved['-'], *tokens]
-          right, tokens = mul(tokens)
-          left = Node::Sub.new(left, right)
+            right, tokens = mul(tokens)
+            left = Node::Sub.new(left, right)
         else
           break
         end
@@ -114,17 +114,17 @@ module Node
       until tokens.empty? do
         case tokens
           in [Token::Reserved['<'], *tokens]
-          right, tokens = add(tokens)
-          left = Node::Lt.new(left, right)
+            right, tokens = add(tokens)
+            left = Node::Lt.new(left, right)
           in [Token::Reserved['<='], *tokens]
-          right, tokens = add(tokens)
-          left = Node::Lte.new(left, right)
+            right, tokens = add(tokens)
+            left = Node::Lte.new(left, right)
           in [Token::Reserved['>'], *tokens]
-          right, tokens = add(tokens)
-          left = Node::Lt.new(right, left)
+            right, tokens = add(tokens)
+            left = Node::Lt.new(right, left)
           in [Token::Reserved['>='], *tokens]
-          right, tokens = add(tokens)
-          left = Node::Lte.new(right, left)
+            right, tokens = add(tokens)
+            left = Node::Lte.new(right, left)
         else
           break
         end
@@ -138,11 +138,11 @@ module Node
       until tokens.empty? do
         case tokens
           in [Token::Reserved['=='], *tokens]
-          right, tokens = add(tokens)
-          left = Node::Eq.new(left, right)
+            right, tokens = add(tokens)
+            left = Node::Eq.new(left, right)
           in [Token::Reserved['!='], *tokens]
-          right, tokens = add(tokens)
-          left = Node::Neq.new(left, right)
+            right, tokens = add(tokens)
+            left = Node::Neq.new(left, right)
         else
           break
         end
@@ -155,14 +155,14 @@ module Node
       left, tokens = equality(tokens)
       case tokens
         in [Token::Reserved['='], *tokens]
-        right, tokens = assign(tokens)
-        case left
-          in Node::Lvar => lvar
-          node = Node::Assign.new(lvar, right)
-          [node, tokens]
-        else
-          raise ArgumentError.new("invalid input. left tree of assignment must be Node::Lvar, but #{left}")
-        end
+          right, tokens = assign(tokens)
+          case left
+            in Node::Lvar => lvar
+              node = Node::Assign.new(lvar, right)
+              [node, tokens]
+          else
+            raise ArgumentError.new("invalid input. left tree of assignment must be Node::Lvar, but #{left}")
+          end
       else
         [left, tokens]
       end
@@ -172,10 +172,10 @@ module Node
     def expr(tokens)
       case tokens
         in [Token::Ret] | [Token::Ret, Token::Eof]
-        [Node::Ret.new(nil), [Token::Eof]]
+          [Node::Ret.new(nil), [Token::Eof]]
         in [Token::Ret, *rest]
-        node, tokens = primary(rest)
-        [Node::Ret.new(node), [Token::Eof]]
+          node, tokens = primary(rest)
+          [Node::Ret.new(node), [Token::Eof]]
       else
         assign(tokens)
       end
@@ -204,7 +204,7 @@ module Node
 
         case tokens
           in [Token::Reserved['if'], *]
-          node, rest_tokens = if_statement(tokens)
+            node, rest_tokens = if_statement(tokens)
         else
           expression_tokens = tokens_until(tokens, Token::Reserved.new(';'), Token::Eof, nil)
           node, rest_tokens = expr(expression_tokens)
@@ -212,7 +212,7 @@ module Node
 
         case [node, rest_tokens]
           in [node, [Token::Eof]]
-          statements << node
+            statements << node
           return [statements, [Token::Eof]]
         else
           statements << node
@@ -229,7 +229,7 @@ module Node
       until tokens.empty? do
         case tokens
           in [Token::Eof]
-          return [nodes, [Token::Eof]]
+            return [nodes, [Token::Eof]]
         else
           node, tokens = statement(tokens)
           nodes << node
