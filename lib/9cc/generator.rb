@@ -25,7 +25,7 @@ class Generator
       break if is_return
     end
 
-    headers + prologue + @outputs + epilogue
+    headers + prologue + @outputs + epilogue + println
   end
 
   private
@@ -43,6 +43,12 @@ class Generator
           run_statement(node)
           return true
         end
+      in [Node::Fcall['println', args], *rest]
+        run_statement(args) unless args.nil?
+        @outputs << "  call println"
+        return run_statement(rest)
+      in [Node::Fcall => fcall, *rest]
+        raise ArgumentError.new("Currently 'println' is only supported function. Input: #{fcall.show}")
       in [Node::Num[value], *rest]
         @outputs << "  push #{value}"
         return run_statement(rest)
@@ -134,7 +140,7 @@ class Generator
     def headers
       arr = []
       arr << ".intel_syntax noprefix # headers"
-      arr << ".global main"
+      arr << ".global main, println"
       arr << "main:"
       arr
     end
@@ -164,6 +170,22 @@ class Generator
         arr << "  pop rbp"
         arr << "  ret"
       end
+    end
+
+    def println
+      arr = []
+      arr << ""
+      arr << "println:"
+      arr << "  push    rax"
+      arr << "  mov     rax, 4"
+      arr << "  mov     rbx, 1"
+      arr << "  mov     rcx, rsp"
+      arr << "  mov     rdx, 1"
+      arr << "  int     0x80"
+      arr << "  mov     rax, 0x0a"
+      arr << "  pop     rax"
+      arr << "  ret"
+      arr
     end
 
     # @param node [Node::Lvar]

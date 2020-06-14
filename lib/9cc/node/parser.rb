@@ -39,13 +39,28 @@ module Node
       return arr
     end
 
-    # primary    = num | ident | "(" expr ")"
+    # primary    = num | ident ("(" primary ")")? | "(" expr ")"
     def primary(tokens)
       case tokens
         in [Token::Num[value], *tokens]
           [Node::Num.new(value), tokens]
         in [Token::Ident[name], *tokens]
-          [Node::Lvar.new(name), tokens]
+          case tokens
+            in [Token::Reserved['('], *tokens]
+              case tokens
+                in [Token::Reserved[')'], *tokens]
+                  [Node::Fcall.new(name, nil), tokens]
+              else
+                case primary(tokens)
+                  in [args, [Token::Reserved[')'], *tokens]]
+                  [Node::Fcall.new(name, args), tokens]
+                else
+                  raise ArgumentError.new("next token must be ')'. tokens: #{tokens}, primary: #{primary(tokens)}")
+                end
+              end
+            else
+              [Node::Lvar.new(name), tokens]
+          end
         in [Token::Reserved['('], *tokens]
           case expr(tokens)
             in [node, [Token::Reserved[')'], *tokens]]

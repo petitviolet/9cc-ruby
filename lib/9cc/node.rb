@@ -79,5 +79,10 @@ module Node
       "return #{Node.show(node)}"
     end
   end
+  Fcall = data :function, :args do # function call
+    def show
+      "#{function}(#{args.nil? ? '' : Node.show(args)})"
+    end
+  end
 end
 
