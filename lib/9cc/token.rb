@@ -15,7 +15,7 @@ module Token
   Eof = const
 
   class << self
-    PUNCTUATIONS = Regexp.union(%w|== != >= <= > < = ! + - * / ( ) ; if else { }|)
+    PUNCTUATIONS = Regexp.union(%w|== != >= <= > < = ! + - * / ( ) ; , if else { }|)
     NUM_REGEX = Regexp.compile(/\d+/)
     IDENT_REGEX = Regexp.compile(/[A-Za-z]+/)
     SPACE_REGEX = Regexp.compile(/\S+/)

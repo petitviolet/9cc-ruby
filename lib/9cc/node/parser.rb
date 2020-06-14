@@ -39,23 +39,29 @@ module Node
       return arr
     end
 
-    # primary    = num | ident ("(" primary ")")? | "(" expr ")"
+    # primary    = num | ident ("(" primary (, primary)* ")")? | "(" expr ")"
     def primary(tokens)
       case tokens
         in [Token::Num[value], *tokens]
           [Node::Num.new(value), tokens]
         in [Token::Ident[name], *tokens]
+          fcall_args = []
           case tokens
             in [Token::Reserved['('], *tokens]
               case tokens
                 in [Token::Reserved[')'], *tokens]
-                  [Node::Fcall.new(name, nil), tokens]
+                  [Node::Fcall.new(name, fcall_args), tokens]
               else
-                case primary(tokens)
-                  in [args, [Token::Reserved[')'], *tokens]]
-                  [Node::Fcall.new(name, args), tokens]
-                else
-                  raise ArgumentError.new("next token must be ')'. tokens: #{tokens}, primary: #{primary(tokens)}")
+                loop do
+                  case primary(tokens)
+                    in [arg, [Token::Reserved[','], *tokens]]
+                      fcall_args << Node::Farg.new(arg, fcall_args.size)
+                    in [arg, [Token::Reserved[')'], *tokens]]
+                      fcall_args << Node::Farg.new(arg, fcall_args.size)
+                      return [Node::Fcall.new(name, fcall_args), tokens]
+                  else
+                    raise ArgumentError.new("next token must be ')'. tokens: #{tokens}, primary: #{primary(tokens)}")
+                  end
                 end
               end
             else

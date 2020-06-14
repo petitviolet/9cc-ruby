@@ -25,7 +25,7 @@ class Generator
       break if is_return
     end
 
-    headers + prologue + @outputs + epilogue + println
+    headers + prologue((@lvar_count - 1) * 8) + @outputs + epilogue + generate_add
   end
 
   private
@@ -43,12 +43,24 @@ class Generator
           run_statement(node)
           return true
         end
-      in [Node::Fcall['println', args], *rest]
-        run_statement(args) unless args.nil?
-        @outputs << "  call println"
+      in [Node::Fcall[func_name, func_args] => fcall, *rest]
+        # run_statement(args) unless args.nil?
+        @outputs << "  # function #{fcall.show}" if @verbose
+        unless func_args.empty?
+          run_statement(func_args[0])
+          run_statement(func_args[1])
+        end
+
+        @outputs << "  mov rax, 0"
+        @outputs << "  call #{func_name}"
+        @outputs << "  push rax"
+        @outputs << "  # ^^^ function #{fcall.show}" if @verbose
+
         return run_statement(rest)
-      in [Node::Fcall => fcall, *rest]
-        raise ArgumentError.new("Currently 'println' is only supported function. Input: #{fcall.show}")
+      in [Node::Farg[Node::Num[value], idx], *rest]
+        arg_regs = %w[rdi rsi rdx rcx r8 r9]
+        @outputs << "  mov #{arg_regs[idx]}, #{value}"
+        return run_statement(rest)
       in [Node::Num[value], *rest]
         @outputs << "  push #{value}"
         return run_statement(rest)
@@ -140,21 +152,25 @@ class Generator
     def headers
       arr = []
       arr << ".intel_syntax noprefix # headers"
-      arr << ".global main, println"
+      arr << ".global main"
       arr << "main:"
       arr
     end
 
-    def prologue
+    def prologue(offset)
       arr = []
       if @verbose
+        arr << "  push r14 # prologue"
+        arr << "  push r15"
         arr << "  push rbp"
         arr << "  mov rbp, rsp"
-        arr << "  sub rsp, #{(@lvar_count - 1) * 8}"
+        # arr << "  sub rsp, #{offset} # ^^^ prologue"
       else
+        arr << "  push r14"
+        arr << "  push r15"
         arr << "  push rbp"
         arr << "  mov rbp, rsp"
-        arr << "  sub rsp, #{(@lvar_count - 1) * 8}"
+        # arr << "  sub rsp, #{offset}"
       end
       arr
     end
@@ -164,12 +180,17 @@ class Generator
       if @verbose
         arr << "  mov rsp, rbp # epilogue"
         arr << "  pop rbp"
+        arr << "  pop r15"
+        arr << "  pop r14"
         arr << "  ret # ^^^ epilogue"
       else
         arr << "  mov rsp, rbp"
         arr << "  pop rbp"
+        arr << "  pop r15"
+        arr << "  pop r14"
         arr << "  ret"
       end
+      arr
     end
 
     def println
@@ -186,6 +207,23 @@ class Generator
       arr << "  pop     rax"
       arr << "  ret"
       arr
+    end
+
+    def generate_add
+      arr = []
+      arr << ""
+      arr << ".text"
+      arr << ".global add"
+      arr << "add:"
+      arr += prologue(16)
+      arr << "  add rsi, rdi"
+      arr << "  mov rax, rsi"
+      arr += epilogue
+      arr
+    end
+
+    def generate_function(name, *args)
+
     end
 
     # @param node [Node::Lvar]

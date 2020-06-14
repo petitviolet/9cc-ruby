@@ -81,8 +81,13 @@ module Node
   end
   Fcall = data :function, :args do # function call
     def show
-      "#{function}(#{args.nil? ? '' : Node.show(args)})"
+      "#{function}(#{args.map { |arg| Node.show(arg) }})"
+    end
+  end
+
+  Farg = data :node, :idx do
+    def show
+      Node.show(node)
     end
   end
 end
-
