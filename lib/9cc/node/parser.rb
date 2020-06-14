@@ -53,7 +53,7 @@ module Node
                   [Node::Fcall.new(name, fcall_args), tokens]
               else
                 loop do
-                  case primary(tokens)
+                  case unary(tokens)
                     in [arg, [Token::Reserved[','], *tokens]]
                       fcall_args << Node::Farg.new(arg, fcall_args.size)
                     in [arg, [Token::Reserved[')'], *tokens]]

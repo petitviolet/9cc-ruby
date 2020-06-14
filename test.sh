@@ -70,6 +70,10 @@ run_test() {
   try 5 'if (1 > 0) 5 else 3'
   try 3 'if (1 < 0) 5 else 3'
   try 5 'if (1 + 2 + 3 == 6) 5 else 3'
+  try 5 'add(2, 3)'
+  try 5 'add(8, -3)'
+  try 5 'add(-3, 8)'
+  try 5 'a = 2; b = 3; add(a, b)'
 
   logging "OK"
 }

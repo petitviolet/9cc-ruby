@@ -2,6 +2,7 @@ require 'rstructural'
 require_relative './node'
 
 class Generator
+  ARG_REGS = %w[rdi rsi rdx rcx r8 r9]
   # @param statements [Array<Array<Node>>]
   # @param outputs [Array]
   # @return [Array<String>]
@@ -46,9 +47,11 @@ class Generator
       in [Node::Fcall[func_name, func_args] => fcall, *rest]
         # run_statement(args) unless args.nil?
         @outputs << "  # function #{fcall.show}" if @verbose
-        unless func_args.empty?
-          run_statement(func_args[0])
-          run_statement(func_args[1])
+        func_args.each do |func_arg|
+          run_statement(func_arg.node)
+        end
+        func_args.each do |func_arg|
+          @outputs << "  pop #{ARG_REGS[func_arg.idx]}"
         end
 
         @outputs << "  mov rax, 0"
@@ -56,10 +59,6 @@ class Generator
         @outputs << "  push rax"
         @outputs << "  # ^^^ function #{fcall.show}" if @verbose
 
-        return run_statement(rest)
-      in [Node::Farg[Node::Num[value], idx], *rest]
-        arg_regs = %w[rdi rsi rdx rcx r8 r9]
-        @outputs << "  mov #{arg_regs[idx]}, #{value}"
         return run_statement(rest)
       in [Node::Num[value], *rest]
         @outputs << "  push #{value}"
@@ -216,8 +215,8 @@ class Generator
       arr << ".global add"
       arr << "add:"
       arr += prologue(16)
-      arr << "  add rsi, rdi"
-      arr << "  mov rax, rsi"
+      arr << "  add #{ARG_REGS[0]}, #{ARG_REGS[1]}"
+      arr << "  mov rax, #{ARG_REGS[0]}"
       arr += epilogue
       arr
     end
