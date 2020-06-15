@@ -5,6 +5,7 @@ try() {
   input="$2"
   option="$3"
 
+  rm -f tmp tmp.s
   rbenv exec ruby -W0 lib/9cc.rb "$input" $option > tmp.s
   # ./9cc "$input" > tmp.s
   gcc -o tmp tmp.s
@@ -77,15 +78,14 @@ run_test() {
   try 5 'if (1 > 0) 5 else 3'
   try 3 'if (1 < 0) 5 else 3'
   try 5 'if (1 + 2 + 3 == 6) 5 else 3'
-  logging 'function call ==='
-  try 5 'add(2, 3)'
-  try 5 'add(8, -3)'
-  try 5 'add(-3, 8)'
-  try 5 'a = 2; b = 3; add(a, b)'
   logging 'block ==='
   try 3 '{ 1 + 2 }'
   try 21 '{ a = 1 + 2; b = 3 + 4; a * b }'
   try 21 'a = { 1 + 2 }; b = { 3 + 4 }; a * b'
+  logging 'function def & call ==='
+  try 5 'def add(i, j) { i + j }; add(2, 3)'
+  try 6 'def mul(i, j) { i * j }; mul(2, 3)'
+  try 6 'def mul(i, j) { i * j }; a = 2; b = { 1 + 2 };  mul(a, b)'
 
   logging "OK"
 }
