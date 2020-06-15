@@ -13,6 +13,7 @@ class Generator
 
   def initialize(outputs, verbose: false)
     @outputs = outputs
+    @functions = []
     @lvar_count = 1
     @verbose = verbose
   end
@@ -20,131 +21,132 @@ class Generator
   def run(statements)
     statements.each do |nodes|
       @outputs << "  # statement: #{Node.show(nodes)}" if @verbose
-      is_return = self.run_statement(nodes)
+      is_return = self.run_statement(nodes, @outputs)
       @outputs << "  # ^^^ statement: #{Node.show(nodes)}" if @verbose
       @outputs << "  pop rax"
       break if is_return
     end
 
-    headers + prologue((@lvar_count - 1) * 8) + @outputs + epilogue + generate_add
+    @functions += generate_add
+    headers + prologue((@lvar_count - 1) * 8) + @outputs + epilogue + @functions
   end
 
   private
 
     # @return [Boolean] if a statement finishes with `return`
-    def run_statement(nodes)
+    def run_statement(nodes, acc)
       case Array(nodes).flatten
       in []
         return false
       in [Node::Ret[node], *rest]
-        @outputs << "  # return!" if @verbose
+        acc << "  # return!" if @verbose
         if node.nil?
           return true
         else
-          run_statement(node)
+          run_statement(node, acc)
           return true
         end
       in [Node::Fcall[func_name, func_args] => fcall, *rest]
-        # run_statement(args) unless args.nil?
-        @outputs << "  # function #{fcall.show}" if @verbose
+        # run_statement(args, acc) unless args.nil?
+        acc << "  # function #{fcall.show}" if @verbose
         func_args.each do |func_arg|
-          run_statement(func_arg.node)
+          run_statement(func_arg.node, acc)
         end
         func_args.each do |func_arg|
-          @outputs << "  pop #{ARG_REGS[func_arg.idx]}"
+          acc << "  pop #{ARG_REGS[func_arg.idx]}"
         end
 
-        @outputs << "  mov rax, 0"
-        @outputs << "  call #{func_name}"
-        @outputs << "  push rax"
-        @outputs << "  # ^^^ function #{fcall.show}" if @verbose
+        acc << "  mov rax, 0"
+        acc << "  call #{func_name}"
+        acc << "  push rax"
+        acc << "  # ^^^ function #{fcall.show}" if @verbose
 
-        return run_statement(rest)
+        return run_statement(rest, acc)
       in [Node::Num[value], *rest]
-        @outputs << "  push #{value}"
-        return run_statement(rest)
+        acc << "  push #{value}"
+        return run_statement(rest, acc)
       in [Node::Lvar => node, *rest]
         generate_lvar(node)
-        @outputs << "  pop rax"
-        @outputs << "  mov rax, [rax]"
-        @outputs << "  push rax"
-        return run_statement(rest)
+        acc << "  pop rax"
+        acc << "  mov rax, [rax]"
+        acc << "  push rax"
+        return run_statement(rest, acc)
       in [Node::Assign[left, right], *rest]
         generate_lvar(left)
-        run_statement(right)
-        @outputs << "  pop rdi"
-        @outputs << "  pop rax"
-        @outputs << "  mov [rax], rdi"
-        @outputs << "  push rdi"
-        return run_statement(rest)
+        run_statement(right, acc)
+        acc << "  pop rdi"
+        acc << "  pop rax"
+        acc << "  mov [rax], rdi"
+        acc << "  push rdi"
+        return run_statement(rest, acc)
       in [Node::If[cond, then_side, else_side]]
         label_number = next_label_number
-        run_statement(cond)
-        @outputs << "  pop rax"
-        @outputs << "  cmp rax, 0"
-        @outputs << "  je .Lelse#{label_number}"
-        run_statement(then_side)
-        @outputs << "  jmp .Lend#{label_number}"
-        @outputs << ".Lelse#{label_number}:"
-        run_statement(else_side)
-        @outputs << ".Lend#{label_number}:"
-        return run_statement(rest)
+        run_statement(cond, acc)
+        acc << "  pop rax"
+        acc << "  cmp rax, 0"
+        acc << "  je .Lelse#{label_number}"
+        run_statement(then_side, acc)
+        acc << "  jmp .Lend#{label_number}"
+        acc << ".Lelse#{label_number}:"
+        run_statement(else_side, acc)
+        acc << ".Lend#{label_number}:"
+        return run_statement(rest, acc)
       else
         run_left_and_right = ->(left, right, rest, &block) do
-          run_statement(left)
-          run_statement(right)
-          @outputs << "  pop rdi"
-          @outputs << "  pop rax"
+          run_statement(left, acc)
+          run_statement(right, acc)
+          acc << "  pop rdi"
+          acc << "  pop rax"
           block.call
-          run_statement(rest)
+          run_statement(rest, acc)
         end
 
         case Array(nodes).flatten
         in [Node::Eq[left, right], *rest]
           run_left_and_right.call(left, right, rest) do
-            @outputs << "  cmp rax, rdi"
-            @outputs << "  sete al"
-            @outputs << "  movzb rax, al"
+            acc << "  cmp rax, rdi"
+            acc << "  sete al"
+            acc << "  movzb rax, al"
           end
         in [Node::Neq[left, right], *rest]
           run_left_and_right.call(left, right, rest) do
-            @outputs << "  cmp rax, rdi"
-            @outputs << "  setne al"
-            @outputs << "  movzb rax, al"
+            acc << "  cmp rax, rdi"
+            acc << "  setne al"
+            acc << "  movzb rax, al"
           end
         in [Node::Lt[left, right], *rest]
           run_left_and_right.call(left, right, rest) do
-            @outputs << "  cmp rax, rdi"
-            @outputs << "  setl al"
-            @outputs << "  movzb rax, al"
+            acc << "  cmp rax, rdi"
+            acc << "  setl al"
+            acc << "  movzb rax, al"
           end
         in [Node::Lte[left, right], *rest]
           run_left_and_right.call(left, right, rest) do
-            @outputs << "  cmp rax, rdi"
-            @outputs << "  setle al"
-            @outputs << "  movzb rax, al"
+            acc << "  cmp rax, rdi"
+            acc << "  setle al"
+            acc << "  movzb rax, al"
           end
         in [Node::Add[left, right], *rest]
           run_left_and_right.call(left, right, rest) do
-            @outputs << "  add rax, rdi"
+            acc << "  add rax, rdi"
           end
         in [Node::Sub[left, right], *rest]
           run_left_and_right.call(left, right, rest) do
-            @outputs << "  sub rax, rdi"
+            acc << "  sub rax, rdi"
           end
         in [Node::Mul[left, right], *rest]
           run_left_and_right.call(left, right, rest) do
-            @outputs << "  imul rax, rdi"
+            acc << "  imul rax, rdi"
           end
         in [Node::Div[left, right], *rest]
           run_left_and_right.call(left, right, rest) do
-            @outputs << "  cqo"
-            @outputs << "  idiv rdi"
+            acc << "  cqo"
+            acc << "  idiv rdi"
           end
         end
       end
 
-      @outputs << "  push rax"
+      acc << "  push rax"
       false
     end
 
