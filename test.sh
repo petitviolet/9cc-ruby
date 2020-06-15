@@ -85,6 +85,7 @@ run_test() {
   logging 'block ==='
   try 3 '{ 1 + 2 }'
   try 21 '{ a = 1 + 2; b = 3 + 4; a * b }'
+  try 21 'a = { 1 + 2 }; b = { 3 + 4 }; a * b'
 
   logging "OK"
 }
