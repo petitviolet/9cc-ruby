@@ -221,8 +221,17 @@ module Node
       return [node, t]
     end
 
+    # block = "{" statement* "}"
+    def block(tokens)
+      expect_next_token!(tokens, Token::Reserved.new('{'))
+      tokens = tokens_until(tokens, Token::Reserved.new('}'))
+      nodes, _ = statement(tokens)
+      node = Node::Block.new(nodes)
+      [node, [Token::Eof]]
+    end
+
     # statement  = expr ";"?
-    #              | "{" statement* "}"
+    #              | block
     #              | "if" "(" expr ")" stmt ("else" stmt)?
     def statement(tokens)
       statements = []
@@ -233,10 +242,8 @@ module Node
         case tokens
           in [Token::Reserved['if'], *]
             node, rest_tokens = if_statement(tokens)
-          in [Token::Reserved['{'], *tokens]
-            tokens = tokens_until(tokens, Token::Reserved.new('}'))
-            nodes, rest_tokens = statement(tokens)
-            node = Node::Block.new(nodes)
+          in [Token::Reserved['{'], *]
+            node, rest_tokens = block(tokens)
           else
             expression_tokens = tokens_until(tokens, Token::Reserved.new(';'), Token::Eof, nil)
             node, rest_tokens = expr(expression_tokens)
