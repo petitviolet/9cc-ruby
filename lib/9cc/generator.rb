@@ -27,7 +27,7 @@ class Generator
       break if is_return
     end
 
-    @functions += generate_add
+    # @functions += generate_add
     headers + prologue((@lvar_count - 1) * 8) + @outputs + epilogue + @functions
   end
 
@@ -46,6 +46,9 @@ class Generator
           run_statement(node, acc)
           return true
         end
+      in [Node::Fdef => fdef, *rest]
+        @functions += define_function(fdef)
+        return run_statement(rest, acc)
       in [Node::Block[nodes] => block, *rest]
         acc << "  # block #{block.show}" if @verbose
         run_statement(nodes, acc)
@@ -71,13 +74,13 @@ class Generator
         acc << "  push #{value}"
         return run_statement(rest, acc)
       in [Node::Lvar => node, *rest]
-        generate_lvar(node)
+        generate_lvar(node, acc)
         acc << "  pop rax"
         acc << "  mov rax, [rax]"
         acc << "  push rax"
         return run_statement(rest, acc)
       in [Node::Assign[left, right], *rest]
-        generate_lvar(left)
+        generate_lvar(left, acc)
         run_statement(right, acc)
         acc << "  pop rdi"
         acc << "  pop rax"
@@ -170,13 +173,13 @@ class Generator
         arr << "  push r15"
         arr << "  push rbp"
         arr << "  mov rbp, rsp"
-        # arr << "  sub rsp, #{offset} # ^^^ prologue"
+        arr << "  sub rsp, #{offset} # ^^^ prologue"
       else
         arr << "  push r14"
         arr << "  push r15"
         arr << "  push rbp"
         arr << "  mov rbp, rsp"
-        # arr << "  sub rsp, #{offset}"
+        arr << "  sub rsp, #{offset}"
       end
       arr
     end
@@ -228,12 +231,24 @@ class Generator
       arr
     end
 
-    def generate_function(name, *args)
-
+    def define_function(fdef)
+      arr = []
+      arr << ""
+      arr << ".text"
+      arr << ".global #{fdef.name}"
+      arr << "#{fdef.name}:"
+      arr += prologue(fdef.args.length * 8)
+      fdef.args.each_with_index do |arg, idx|
+        generate_lvar(Node::Lvar.new(arg), arr)
+        arr << "  mov [rax], #{ARG_REGS[idx]}"
+      end
+      run_statement(fdef.block, arr)
+      arr += epilogue
+      arr
     end
 
     # @param node [Node::Lvar]
-    def generate_lvar(node)
+    def generate_lvar(node, acc)
       @lvars ||= {}
       offset = @lvars[node.name]
       if offset.nil?
@@ -242,13 +257,13 @@ class Generator
         @lvars[node.name] = offset
       end
       if @verbose
-        @outputs << "  mov rax, rbp"
-        @outputs << "  sub rax, #{offset} # #{node.name}"
-        @outputs << "  push rax"
+        acc << "  mov rax, rbp"
+        acc << "  sub rax, #{offset} # #{node.name}"
+        acc << "  push rax"
       else
-        @outputs << "  mov rax, rbp"
-        @outputs << "  sub rax, #{offset}"
-        @outputs << "  push rax"
+        acc << "  mov rax, rbp"
+        acc << "  sub rax, #{offset}"
+        acc << "  push rax"
       end
     end
 

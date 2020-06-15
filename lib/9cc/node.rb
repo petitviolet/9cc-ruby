@@ -96,4 +96,10 @@ module Node
       "{ #{Node.show(nodes)} }"
     end
   end
+
+  Fdef = data :name, :args, :block do
+    def show
+      "def #{name}(#{args.join(', ')}) #{Node.show(block)}"
+    end
+  end
 end

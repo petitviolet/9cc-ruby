@@ -221,17 +221,47 @@ module Node
       return [node, t]
     end
 
-    # block = "{" statement* "}"
+    # block = "{" expr* "}"
     def block(tokens)
       expect_next_token!(tokens, Token::Reserved.new('{'))
-      tokens = tokens_until(tokens, Token::Reserved.new('}'))
-      nodes, _ = statement(tokens)
+      block_tokens = tokens_until(tokens, Token::Reserved.new('}'))
+      nodes, _ = statement(block_tokens)
       node = Node::Block.new(nodes)
-      [node, [Token::Eof]]
+      [node, tokens]
+    end
+
+    # function = def ident "(" ident? ("," ident)* ")" block
+    def function(tokens)
+      expect_next_token!(tokens, Token::Reserved.new('def'))
+      case tokens
+        in [Token::Ident[name], *tokens]
+          expect_next_token!(tokens, Token::Reserved.new('('))
+          arg_tokens = tokens_until(tokens, Token::Reserved.new(')'))
+          args = []
+          loop do
+            case arg_tokens
+              in [Token::Ident[arg], *arg_tokens]
+                args << arg
+                case arg_tokens
+                  in [Token::Reserved[','], *arg_tokens]
+                    next
+                  else
+                    break
+                end
+              else
+                raise ArgumentError.new("next token must be ')'. tokens: #{tokens}")
+            end
+          end
+          body, rest_tokens = block(tokens)
+          [Node::Fdef.new(name, args, body), rest_tokens]
+        else
+          raise ArgumentError.new("next token must be Ident. tokens: #{tokens}")
+      end
     end
 
     # statement  = expr ";"?
     #              | block
+    #              | function
     #              | "if" "(" expr ")" stmt ("else" stmt)?
     def statement(tokens)
       statements = []
@@ -244,6 +274,8 @@ module Node
             node, rest_tokens = if_statement(tokens)
           in [Token::Reserved['{'], *]
             node, rest_tokens = block(tokens)
+          in [Token::Reserved['def'], *]
+            node, rest_tokens = function(tokens)
           else
             expression_tokens = tokens_until(tokens, Token::Reserved.new(';'), Token::Eof, nil)
             node, rest_tokens = expr(expression_tokens)
