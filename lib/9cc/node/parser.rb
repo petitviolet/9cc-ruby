@@ -171,12 +171,18 @@ module Node
       [left, tokens]
     end
 
-    # assign     = equality ("=" assign)?
+    # assign     = equality ("="  (assign | "{" statement* "}"))?
     def assign(tokens)
       left, tokens = equality(tokens)
       case tokens
         in [Token::Reserved['='], *tokens]
-          right, tokens = assign(tokens)
+          case tokens
+            in [Token::Reserved['{'], *tokens]
+              tokens = tokens_until(tokens, Token::Reserved.new('}'))
+              right, tokens = statement(tokens)
+            else
+              right, tokens = assign(tokens)
+          end
           case left
             in Node::Lvar => lvar
               node = Node::Assign.new(lvar, right)
