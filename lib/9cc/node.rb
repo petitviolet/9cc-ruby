@@ -90,4 +90,10 @@ module Node
       Node.show(node)
     end
   end
+
+  Block = data :nodes do
+    def show
+      "{ #{Node.show(nodes)} }"
+    end
+  end
 end

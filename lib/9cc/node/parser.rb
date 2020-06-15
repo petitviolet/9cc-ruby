@@ -216,6 +216,7 @@ module Node
     end
 
     # statement  = expr ";"?
+    #              | "{" statement* "}"
     #              | "if" "(" expr ")" stmt ("else" stmt)?
     def statement(tokens)
       statements = []
@@ -226,9 +227,13 @@ module Node
         case tokens
           in [Token::Reserved['if'], *]
             node, rest_tokens = if_statement(tokens)
-        else
-          expression_tokens = tokens_until(tokens, Token::Reserved.new(';'), Token::Eof, nil)
-          node, rest_tokens = expr(expression_tokens)
+          in [Token::Reserved['{'], *tokens]
+            tokens = tokens_until(tokens, Token::Reserved.new('}'))
+            nodes, rest_tokens = statement(tokens)
+            node = Node::Block.new(nodes)
+          else
+            expression_tokens = tokens_until(tokens, Token::Reserved.new(';'), Token::Eof, nil)
+            node, rest_tokens = expr(expression_tokens)
         end
 
         case [node, rest_tokens]

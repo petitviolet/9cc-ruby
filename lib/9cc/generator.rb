@@ -46,6 +46,11 @@ class Generator
           run_statement(node, acc)
           return true
         end
+      in [Node::Block[nodes] => block, *rest]
+        acc << "  # block #{block.show}" if @verbose
+        run_statement(nodes, acc)
+        acc << "  # ^^^ block" if @verbose
+        return run_statement(rest, acc)
       in [Node::Fcall[func_name, func_args] => fcall, *rest]
         # run_statement(args, acc) unless args.nil?
         acc << "  # function #{fcall.show}" if @verbose
