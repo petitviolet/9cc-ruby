@@ -82,6 +82,9 @@ run_test() {
   try 5 'add(8, -3)'
   try 5 'add(-3, 8)'
   try 5 'a = 2; b = 3; add(a, b)'
+  logging 'block ==='
+  try 3 '{ 1 + 2 }'
+  try 21 '{ a = 1 + 2; b = 3 + 4; a * b }'
 
   logging "OK"
 }
