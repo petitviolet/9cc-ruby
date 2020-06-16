@@ -39,7 +39,7 @@ module Node
       return arr
     end
 
-    # primary    = num | ident ("(" primary (, primary)* ")")? | "(" expr ")"
+    # primary    = num | ident ("(" unary (, unary)* ")")? | "(" expr ")"
     def primary(tokens)
       case tokens
         in [Token::Num[value], *tokens]
@@ -47,11 +47,9 @@ module Node
         in [Token::Ident[name], *tokens]
           fcall_args = []
           case tokens
+            in [Token::Reserved['('], Token::Reserved[')'], *tokens]
+                [Node::Fcall.new(name, fcall_args), tokens]
             in [Token::Reserved['('], *tokens]
-              case tokens
-                in [Token::Reserved[')'], *tokens]
-                  [Node::Fcall.new(name, fcall_args), tokens]
-              else
                 loop do
                   case unary(tokens)
                     in [arg, [Token::Reserved[','], *tokens]]
@@ -59,14 +57,13 @@ module Node
                     in [arg, [Token::Reserved[')'], *tokens]]
                       fcall_args << Node::Farg.new(arg, fcall_args.size)
                       return [Node::Fcall.new(name, fcall_args), tokens]
-                  else
-                    raise ArgumentError.new("next token must be ')'. tokens: #{tokens}, primary: #{primary(tokens)}")
+                    else
+                      raise ArgumentError.new("next token must be ')'. tokens: #{tokens}, primary: #{primary(tokens)}")
                   end
                 end
-              end
             else
               [Node::Lvar.new(name), tokens]
-          end
+            end
         in [Token::Reserved['('], *tokens]
           case expr(tokens)
             in [node, [Token::Reserved[')'], *tokens]]
@@ -208,7 +205,7 @@ module Node
       end
     end
 
-    # "if" "(" expr ")" stmt ("else" stmt)?
+    # "if" "(" expr ")" statement ("else" statement)?
     def if_statement(tokens)
       expect_next_token!(tokens, Token::Reserved.new('if'))
       expect_next_token!(tokens, Token::Reserved.new('('))
@@ -262,7 +259,7 @@ module Node
     # statement  = expr ";"?
     #              | block
     #              | function
-    #              | "if" "(" expr ")" stmt ("else" stmt)?
+    #              | "if" "(" expr ")" statement ("else" statement)?
     def statement(tokens)
       statements = []
       until tokens.empty?
@@ -292,7 +289,7 @@ module Node
       [statements, tokens]
     end
 
-    # program    = stmt*
+    # program    = statement*
     def program(tokens)
       node, tokens = statement(tokens)
       nodes = [node]
