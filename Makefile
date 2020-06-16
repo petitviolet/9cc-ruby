@@ -9,12 +9,11 @@ docker/test:
 
 # make docker/try ARG='5 "return ( 1 + 4 ); 3" -v'
 docker/try:
-	# docker exec -it 9cc sh -c './test.sh $(ARG)'
 	docker run --rm -v $$PWD:/9cc -w /9cc petitviolet/9cc-ruby:latest sh -c "./test.sh $(ARG)"
 
-# make run ARG="1 + 2 + 3 - 4"
+# make run ARG='"1 + 2 + 3 - 4" -v'
 run:
-	ruby -W0 lib/9cc.rb $(ARG)
+	rbenv exec ruby -W0 lib/9cc.rb $(ARG)
 
 clean:
 	rm -f 9cc *.o *~ tmp*
