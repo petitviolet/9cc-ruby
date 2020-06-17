@@ -16,10 +16,11 @@ module Token
 
   class << self
     PUNCTUATIONS = Regexp.union(%w|== != >= <= > < = ! + - * / ( ) ; , if else def { }|)
+    KEYWORDS = Regexp.union(%w|if else def|)
     NUM_REGEX = Regexp.compile(/\d+/)
     IDENT_REGEX = Regexp.compile(/[A-Za-z]+/)
     SPACE_REGEX = Regexp.compile(/\S+/)
-    TOKENIZE_REGEX = Regexp.union(IDENT_REGEX, NUM_REGEX, PUNCTUATIONS, SPACE_REGEX)
+    TOKENIZE_REGEX = Regexp.union(IDENT_REGEX, NUM_REGEX, PUNCTUATIONS, KEYWORDS, SPACE_REGEX)
 
     # @param [String] user_inputs
     # @return [TokenKind]
@@ -31,6 +32,8 @@ module Token
         in "return"
           acc << Token::Ret
         in sign if PUNCTUATIONS.match?(sign)
+          acc << Token::Reserved.new(sign)
+        in sign if KEYWORDS.match?(sign)
           acc << Token::Reserved.new(sign)
         in ident if IDENT_REGEX.match?(ident)
           acc << Token::Ident.new(ident)
